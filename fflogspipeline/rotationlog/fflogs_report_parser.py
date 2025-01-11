@@ -64,11 +64,11 @@ class FflogsReportParser:
                 * 'cast' events of the fight
         """
         report = self.__fetch_report(report_key)
-        kill_fights = [fight for fight in report.fights if fight.is_kill and fight.standard_comp] 
+        kill_fights = [fight for fight in report.fights() if fight.is_kill() and fight.standard_comp()] 
         fight_ids = [fight.id for fight in kill_fights]
         player_id_job_mappings = [self.__create_player_id_to_job_mapping(kill_fight.player_details()) for kill_fight in kill_fights]
 
-        cast_events_list = [self.__collect_only_cast_events(kill_fight) for kill_fight in kill_fights]
+        cast_events_list = [self.__collect_only_cast_events(kill_fight.events()) for kill_fight in kill_fights]
 
         fight_datas = []
 
