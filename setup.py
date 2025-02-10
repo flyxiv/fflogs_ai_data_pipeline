@@ -4,7 +4,12 @@ _install_requires = [
     'fflogsapi',
     'pyyaml',
     'tqdm',
-    'jupyter'
+    'jupyter',
+	'scikit-learn',
+	'pandas',
+	'numpy',
+	'matplotlib',
+	'scipy'
 ]
 
 _package_excludes = [

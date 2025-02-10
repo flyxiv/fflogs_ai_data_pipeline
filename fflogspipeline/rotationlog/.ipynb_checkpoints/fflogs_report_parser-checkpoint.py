@@ -41,7 +41,7 @@ class FflogsReportParser:
             job_name = player_detail.job.name
             
             if job_name in FFXIV_JOB_NAMES_TO_COMBAT_JOB_MAPPING:
-                player_id_to_job_mapping[player_detail.id] = job_name
+                player_id_to_job_mapping[player_detail.id] = FFXIV_JOB_NAMES_TO_COMBAT_JOB_MAPPING[job_name]
             else:
                 raise FfxivRotationPipelineInvalidJobName
                
