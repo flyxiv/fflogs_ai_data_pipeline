@@ -7,3 +7,9 @@ Data engineering pipeline to collect rotation logs. The logs will be used to tra
 ```
 $ pip install fflogsapi
 ```
+
+# How to setup
+1) Create Fflogs API username and key
+2) Save the credentials in config.yml
+
+![credentials](./images/credentials.png)
