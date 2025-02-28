@@ -3,11 +3,16 @@
 FFLogs AI data pipeline only needs combat related events, which are cast events
 """
 
+import pathlib
+import json
+
 from fflogspipeline.ffxivsystem.job import FFXIV_JOB_NAMES_TO_COMBAT_JOB_MAPPING
 from fflogspipeline.ffxivsystem.errors import FfxivRotationPipelineInvalidPartySize, FfxivRotationPipelineInvalidJobName
 from fflogsapi import FFLogsClient
 from dataclasses import dataclass
 from typing import List
+
+from ..util import USERNAME, KEY
 
 CAST_EVENT_TYPE_NAME = 'cast'
 FFXIV_STANDARD_PARTY_SIZE = 8
@@ -23,8 +28,10 @@ class FightData:
 
 
 class FflogsReportParser:
-    def __init__(self, username, key):
-        self.client = FFLogsClient(username, key)
+    def __init__(self):
+        print(USERNAME)
+        print(KEY)
+        self.client = FFLogsClient(USERNAME, KEY)
     
     def __fetch_report(self, report_key: str):
         return self.client.get_report(report_key)
@@ -62,7 +69,11 @@ class FflogsReportParser:
             Parsed result data containing:
                 * Dictionary mapping player id to the player's job
                 * 'cast' events of the fight
+
+        Writes:
+            Saves parsed rotation log in data/<report_key>.json
         """
+        print(report_key)
         report = self.__fetch_report(report_key)
         kill_fights = [fight for fight in report.fights() if fight.is_kill() and fight.standard_comp()] 
         fight_ids = [fight.id for fight in kill_fights]
@@ -74,5 +85,13 @@ class FflogsReportParser:
 
         for (fight_id, player_id_job_mapping, cast_events) in zip(fight_ids, player_id_job_mappings, cast_events_list):
             fight_datas.append(FightData(report_key=report_key, fight_id=fight_id, player_id_job_mapping=player_id_job_mapping, events=cast_events))
+
+
+        data_dir = pathlib.Path.cwd() / 'data'
         
+        json_file_path = data_dir / f'{report_key}.json'
+
+        with open(json_file_path, 'w') as json_file:
+            json.dump([fight_data.__dict__ for fight_data in fight_datas])
+
         return fight_datas
