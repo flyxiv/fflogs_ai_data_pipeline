@@ -35,7 +35,7 @@ def train(target_time_millisecond: int):
             else:
                 earliest_possible_time = 0
                 latest_possible_time = gcd_cooldown_millisecond - DEFAULT_DELAY_MILLISECOND
-                cast_time_offset = delay * latest_possible_time
+                cast_time_offset = delay / agent.time_unit * latest_possible_time
 
             ninja_environment._advance_time(cast_time_offset)
             possible_gcd_actions = ninja_environment.get_possible_gcd_actions()
