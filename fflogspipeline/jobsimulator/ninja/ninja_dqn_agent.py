@@ -15,13 +15,11 @@ def custom_loss(is_gcd):
         gcd_true, ogcd_true, delay_true = y_true
         gcd_pred, ogcd_pred, delay_pred = y_pred
 
-        # is_gcd에 따라 손실 계산
         gcd_loss = tf.keras.losses.categorical_crossentropy(gcd_true, gcd_pred)
         ogcd_loss = tf.keras.losses.categorical_crossentropy(
             ogcd_true, ogcd_pred)
         delay_loss = tf.keras.losses.mse(delay_true, delay_pred)
 
-        # 조건에 따라 손실 마스킹
         masked_gcd_loss = tf.where(is_gcd, gcd_loss, 0.0)
         masked_ogcd_loss = tf.where(is_gcd, 0.0, ogcd_loss)
         masked_delay_loss = tf.where(is_gcd, 0.0, delay_loss)
