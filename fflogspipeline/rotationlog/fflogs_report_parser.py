@@ -73,7 +73,7 @@ class FflogsReportParser:
         Writes:
             Saves parsed rotation log in data/<report_key>.json
         """
-        print(report_key)
+        print(f"report_key: {report_key}")
         report = self.__fetch_report(report_key)
         kill_fights = [fight for fight in report.fights() if fight.is_kill() and fight.standard_comp()] 
         fight_ids = [fight.id for fight in kill_fights]

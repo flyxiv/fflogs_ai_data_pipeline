@@ -1,4 +1,10 @@
 """Class for extracting logs that are linked from a URL.
+
+run example: in fflogs_ai_data_pipeline directory,
+
+```sh
+python -m fflogspipeline.extractor.report_extractor
+```
 """
 
 
@@ -13,11 +19,11 @@ import re
 import pathlib
 import yaml
 import tqdm
+import logging
 
 from ..util import HTTP_RESPONSE_OK
 from ..rotationlog.fflogs_report_parser import FflogsReportParser
 
-import logging
 
 class ReportExtractor():
 	"""Extracts URL of logs inside a DPS ranking directory.
@@ -40,7 +46,9 @@ class ReportExtractor():
 			with open(config_file_path, 'r') as config_yaml_file:
 				config = yaml.load(config_yaml_file, yaml.FullLoader) 
 				ranking_urls = config['urls']
+
 				self._find_all_reports_to_parse(ranking_urls)
+				self.reports_to_parse = sum(self.reports_to_parse, list())
 
 				logging.info(f'number of reports to parse: {len(self.reports_to_parse)}')
 
