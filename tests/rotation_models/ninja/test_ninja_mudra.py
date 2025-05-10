@@ -33,7 +33,7 @@ class NinjaMudraTest(unittest.TestCase):
         potency = int(round(reward * MAX_POTENCY))
         assert potency == 330, f"potency should be 330, but it is {potency}"
         assert self.ninja_environment.resources.debuffs[NinjaDebuffs.DOKUMORI_DEBUFF.value] == [20300, 1], f"debuff should be [20300, 1], but it is {self.ninja_environment.resources.debuffs[NinjaDebuffs.DOKUMORI_DEBUFF.value]}"
-
+        assert self.ninja_environment.resources.stacks[NinjaStacks.NINKI.value] == 40, f"ninki should be 40, but it is {self.ninja_environment.resources.stacks[NinjaStacks.NINKI.value]}"
 
         # kunai's bane 10% buff and dokumori 5% buff, so 540 * 1.1 * 1.05 = 624
         _, _, _, reward, _ = self.ninja_environment.step(NinjaSkills.DREAM_WITHIN_A_DREAM.value)
