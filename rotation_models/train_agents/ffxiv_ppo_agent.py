@@ -51,7 +51,7 @@ class FFXIVPPOAgent:
 
         ## Rollout buffer related
         self.rollout_buffer = [] 
-        self.L = 1024 
+        self.L = 256 
         self.batch_size = 64 
         self.n_epochs = 10
 
@@ -145,20 +145,29 @@ class FFXIVPPOAgent:
         gae_advantages_per_episode = []
         episode_start_idx = 0
 
-        while episode_start_idx < len(self.rollout_buffer):
-            while episode_start_idx < len(self.rollout_buffer) and not self.rollout_buffer[episode_start_idx].done:
-                episode_start_idx += 1
+        N = len(self.rollout_buffer)
 
-            episode_end_idx = min(episode_start_idx + self.L, len(self.rollout_buffer))
+        done_indices = [i for i, experience in enumerate(self.rollout_buffer) if experience.done]
+
+        while episode_start_idx < N:
+            episode_end_idx = episode_start_idx
+            while episode_end_idx < N and not self.rollout_buffer[episode_end_idx].done:
+                episode_end_idx += 1
             
-            rewards = rewards[episode_start_idx:episode_end_idx, :]
-            v_t_old = v_t_old[episode_start_idx:episode_end_idx, :]
-            v_t_plus_1_old = v_t_plus_1_old[episode_start_idx:episode_end_idx, :]
+            episode_end_idx = min(episode_end_idx + 1, N)
 
-            gae_advantages_per_episode.append(self._calculate_gae_advantages(v_t_old, v_t_plus_1_old, rewards))
+            rewards_episode = rewards[episode_start_idx:episode_end_idx, :]
+            v_t_old_episode = v_t_old[episode_start_idx:episode_end_idx, :]
+            v_t_plus_1_old_episode = v_t_plus_1_old[episode_start_idx:episode_end_idx, :]
+
+            if rewards_episode.shape[0] == 0:
+                break
+
+            gae_advantages = self._calculate_gae_advantages(v_t_old_episode, v_t_plus_1_old_episode, rewards_episode)
+            gae_advantages_per_episode.append(gae_advantages)
             episode_start_idx = episode_end_idx
 
-        return np.concatenate(gae_advantages_per_episode, axis=0)
+        return np.concatenate(gae_advantages_per_episode, axis=0).reshape(-1, 1)
  
 
     def train_from_rollout_buffer(self):
@@ -176,7 +185,7 @@ class FFXIVPPOAgent:
         _, v_t_plus_1_old = self.new_model([next_states, next_valid_actions])
 
         self.gae_advantages = self._calculate_partitioned_gae_advantages(v_t_old, v_t_plus_1_old, rewards)
-        assert self.gae_advantages.shape == [self.L, 1]
+        assert self.gae_advantages.shape == (self.L, 1), f"GAE advantages shape: {self.gae_advantages.shape} is not equal to ({self.L}, 1)"
        
         v_target = self.gae_advantages + v_t_old
         training_dataset = [TrainingData(experience, gae_advantage, v_target) for experience, gae_advantage, v_target in zip(self.rollout_buffer, self.gae_advantages, v_target)]

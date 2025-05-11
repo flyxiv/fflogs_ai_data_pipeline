@@ -29,8 +29,6 @@ class FightData:
 
 class FflogsReportParser:
     def __init__(self):
-        print(USERNAME)
-        print(KEY)
         self.client = FFLogsClient(USERNAME, KEY)
     
     def __fetch_report(self, report_key: str):

@@ -14,31 +14,32 @@ import argparse
 import logging
 from tqdm import tqdm
 import os
+from rotation_models.ninja.ninja_combat_data import NinjaSkills
 
-from .train_agents.dqn_agent import DQNAgent
-from .train_agents.ppo_agent import PPOAgent
+from .train_agents.ffxiv_dqn_agent import FFXIVDQNAgent
+from .train_agents.ffxiv_ppo_agent import FFXIVPPOAgent
 from .create_ffxiv_environment import create_ffxiv_environment
 from .experience import Experience
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-type", type=str, required=True, choices=["dqn", "ppo"], help="type of model to train(dqn or ppo)")
-    parser.add_argument("--save_path", type=str, required=True, help="path to save the model")
-    parser.add_argument("--class-name", type=str, required=False, default="Ninja", help="class the model will train on")
-    parser.add_argument("--target_time_millisecond", type=int, required=False, default=360000, help="target combatime in milliseconds")
-    parser.add_argument("--num_episodes", type=int, required=False, default=100, help="number of episodes to train")
+    parser.add_argument("--save-path", type=str, required=True, help="path to save the model")
+    parser.add_argument("--class-name", type=str, required=False, choices=["ninja"], help="class the model will train on")
+    parser.add_argument("--target-time-millisecond", type=int, required=False, default=360000, help="target combatime in milliseconds")
+    parser.add_argument("--num-episodes", type=int, required=False, default=100, help="number of episodes to train")
     parser.add_argument("--replay_period", type=int, required=False, default=32, help="step interval to replay experience(for dqn only)")
     return parser.parse_args()
 
 def train_dqn(target_time_millisecond: int, class_name: str, num_episodes=100, replay_period=32, save_path="ninja_model_dqn.keras"):
     environment = create_ffxiv_environment(class_name, target_time_millisecond)
-    agent = NinjaDQNAgent(state_size=environment.state_size, action_size=environment.action_size, replay_period=replay_period)
+    agent = FFXIVDQNAgent(state_size=environment.state_size, action_size=environment.action_size, replay_period=replay_period)
 
     num_actions = 0
 
     for episode in tqdm(range(num_episodes)):
         environment.reset()
-        valid_actions = environment.get_valid_actions()
+        valid_actions = environment.get_valid_skills()
 
         done = False
         state = environment.get_state()
@@ -52,13 +53,13 @@ def train_dqn(target_time_millisecond: int, class_name: str, num_episodes=100, r
                 logging.debug(f"action: {NinjaSkills(action_id).name}")
             assert action_id < len(NinjaSkills) + 1, f"action_id: {action_id} is greater than: {len(NinjaSkills) + 1}"
 
-            next_state, next_valid_actions, current_time_millisecond, reward, done = ninja_environment.step(action_id)
+            next_state, next_valid_actions, current_time_millisecond, reward, done = environment.use_skill(action_id)
 
             logging.debug(
                 f"valid_actions: {[NinjaSkills(idx).name for idx, action in enumerate(valid_actions) if action > 0 and idx > 0]}")
             logging.debug(current_time_millisecond)
 
-            experience = Experience(state=state, action_id=action_id, reward=reward, next_state=next_state, done=done, priority=1, valid_actions=valid_actions, next_valid_actions=next_valid_actions)
+            experience = Experience(state=state, action_id=action_id, reward=reward, next_state=next_state, done=done, valid_actions=valid_actions, next_valid_actions=next_valid_actions)
             agent.insert_to_memory(experience)
 
             if done:
@@ -70,23 +71,23 @@ def train_dqn(target_time_millisecond: int, class_name: str, num_episodes=100, r
             valid_actions = next_valid_actions
             state = next_state
 
-            if num_actions % replay_period == 0:
-                agent.replay_batch(16)
+            if num_actions % agent.replay_period == 0:
+                agent.replay_batch()
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     agent.duel_q_network.save(save_path)
 
 
 
-def train_ppo(target_time_millisecond: int, num_episodes=100, save_path="ninja_model_ppo.keras"):
-    ninja_environment = NinjaEnvironment(target_time_millisecond)
-    agent = NinjaPPOAgent(state_size=ninja_environment.state_size, action_size=ninja_environment.action_size)
+def train_ppo(target_time_millisecond: int, class_name: str, num_episodes=100, save_path="ninja_model_ppo.keras"):
+    environment = create_ffxiv_environment(class_name, target_time_millisecond)
+    agent = FFXIVPPOAgent(state_size=environment.state_size, action_size=environment.action_size)
 
     for episode in tqdm(range(num_episodes)):
-        ninja_environment.reset()
-        valid_actions = ninja_environment.get_valid_actions()
+        environment.reset()
+        valid_actions = environment.get_valid_actions()
         done = False
-        state = ninja_environment._get_state()
+        state = environment.get_state()
         current_time_millisecond = 0
         next_valid_actions= None 
 
@@ -97,7 +98,7 @@ def train_ppo(target_time_millisecond: int, num_episodes=100, save_path="ninja_m
                 logging.debug(f"action: {NinjaSkills(action_id).name}")
             assert action_id < len(NinjaSkills) + 1, f"action_id: {action_id} is greater than: {len(NinjaSkills) + 1}"
 
-            next_state, next_valid_actions, current_time_millisecond, reward, done = ninja_environment.step(action_id)
+            next_state, next_valid_actions, current_time_millisecond, reward, done = environment.step(action_id)
 
             logging.debug(
                 f"valid_actions: {[NinjaSkills(idx).name for idx, action in enumerate(valid_actions) if action > 0 and idx > 0]}")

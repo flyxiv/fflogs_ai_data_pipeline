@@ -195,6 +195,8 @@ class NinjaEnvironment(FFXIVEnvironment):
             return self.resources.status[NinjaStatus.TENCHIJIN_STATUS.value] is None
         elif skill_id == NinjaSkills.MEISUI.value:
             return self.resources.status[NinjaStatus.SUITON_STATUS.value] is not None
+        elif skill_id == NinjaSkills.BUNSHIN.value:
+            return self.resources.stacks[NinjaStacks.NINKI.value] >= 50
 
         return True
 

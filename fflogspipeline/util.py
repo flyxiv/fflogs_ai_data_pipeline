@@ -12,9 +12,9 @@ Needs to have: fflogs_rotation_data_pipeline/config.yml with following categorie
 
 HTTP_RESPONSE_OK = 200
 
-_YAML_FILE_DIR = os.path.join(Path(__file__).resolve().parent.parent, 'config.yml')
+_YAML_FILE_DIR = os.path.join(Path(__file__).resolve().parent.parent, "config.yml")
 
-with open(_YAML_FILE_DIR, 'r') as config_yaml_file:
-    config = yaml.load(config_yaml_file, yaml.FullLoader) 
-    USERNAME = config['username']
-    KEY = config['key']
+with open(_YAML_FILE_DIR, "r") as config_yaml_file:
+    config = yaml.load(config_yaml_file, yaml.FullLoader)
+    USERNAME = config["username"]
+    KEY = config["key"]

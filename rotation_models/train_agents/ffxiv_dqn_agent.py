@@ -31,6 +31,7 @@ class FFXIVDQNAgent:
         # Replay buffer related
         self.memory = SumTree(capacity=1000)
         self.replay_period = replay_period
+        self.batch_size = 16
 
         # Epsilon-greedy hyperparameters
         self.epsilon = 1.0
@@ -148,13 +149,13 @@ class FFXIVDQNAgent:
         # Give current max priority to new experience
         self.memory.add(priority=self.memory.get_max_priority(), data=experience)
 
-    def replay_batch(self, batch_size):
+    def replay_batch(self):
         """Use DeepMind's Update TD-error only on sampled batch
         Variable names are from the paper Prioritized Experience Replay
         equations are organized in image: https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT26zqRUx0QEZ0YNdxYD4nMTLWkuArDUvHrLg&s
         """
 
-        assert len(self.memory) >= batch_size, f"Memory size: {len(self.memory)} is less than batch size: {batch_size}"
+        assert len(self.memory) >= self.batch_size, f"Memory size: {len(self.memory)} is less than batch size: {self.batch_size}"
 
         N = len(self.memory)
         
@@ -163,7 +164,7 @@ class FFXIVDQNAgent:
         sampled_batches = []
 
         with tf.GradientTape() as tape:
-            for j in range(batch_size):
+            for j in range(self.batch_size):
                 sample_experience = self.memory.sample()
 
                 # Because of floating point precision, sometimes sampling goes through routes
@@ -191,7 +192,7 @@ class FFXIVDQNAgent:
 
                 self.memory.update(idx, new_p)
 
-                loss += w_j * (td_error_j ** 2) / batch_size
+                loss += w_j * (td_error_j ** 2) / self.batch_size
 
         logging.info(f"loss: {loss}")
         grads = tape.gradient(loss, self.duel_q_network.trainable_variables)
