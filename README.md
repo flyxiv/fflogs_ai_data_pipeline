@@ -5,6 +5,7 @@
 # Environment
 
 - Python 3.11
+- Tensorflow 3
 
 ```
 python -m venv venv
