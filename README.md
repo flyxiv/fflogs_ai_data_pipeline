@@ -27,7 +27,7 @@ $ pip install -e .
 $ python -m rotation_models.inference --model-type dqn --model-path .\ninja_model_dqn.keras --output-path .\ninja_rotation_log_dqn.csv
 
 # 2. run ppo agent inference 
-$ python -m rotation_models.inference --model-type dqn --model-path .\ninja_model_dqn.keras --output-path .\ninja_rotation_log_dqn.csv
+$ python -m rotation_models.inference --model-type ppo --model-path .\ninja_model_ppo.keras --output-path .\ninja_rotation_log_ppo.csv
 ```
 
 # How to setup FFLogs credentials for scraping(Optional)
