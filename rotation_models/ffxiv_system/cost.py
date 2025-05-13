@@ -1,3 +1,10 @@
+"""Implements different cost requirements for skills
+
+Some skills need to use a buff/debuff, some use up all stacks of a resource, etc.
+
+Cost defines interface for the resource requirements entity of a skill.
+"""
+
 from abc import abstractmethod
 from .combat_status import CombatStatus
 
@@ -14,13 +21,14 @@ class Cost:
     def has_cost(self, combat_status: CombatStatus):
         pass
 
+
 class CheckBuff(Cost):
     def __init__(self, buff_id: int):
         self.buff_id = buff_id
 
     def has_cost(self, combat_status: CombatStatus):
-        return combat_status.buffs[self.buff_id] 
-    
+        return combat_status.buffs[self.buff_id]
+
     def use(self, combat_status: CombatStatus):
         pass
 
@@ -42,7 +50,10 @@ class UseBuff(Cost):
         self.buff_id = buff_id
 
     def has_cost(self, combat_status: CombatStatus):
-        return combat_status.buffs[self.buff_id] and combat_status.buffs[self.buff_id].current_stacks >= 1 
+        return (
+            combat_status.buffs[self.buff_id]
+            and combat_status.buffs[self.buff_id].current_stacks >= 1
+        )
 
     def use(self, combat_status: CombatStatus):
         if combat_status.buffs[self.buff_id]:
@@ -51,13 +62,16 @@ class UseBuff(Cost):
             if combat_status.buffs[self.buff_id].current_stacks == 0:
                 combat_status.buffs[self.buff_id] = None
 
-    
+
 class UseDebuff(Cost):
     def __init__(self, debuff_id: int):
         self.debuff_id = debuff_id
-        
+
     def has_cost(self, combat_status: CombatStatus):
-        return combat_status.debuffs[self.debuff_id] and combat_status.debuffs[self.debuff_id].current_stacks >= 1 
+        return (
+            combat_status.debuffs[self.debuff_id]
+            and combat_status.debuffs[self.debuff_id].current_stacks >= 1
+        )
 
     def use(self, combat_status: CombatStatus):
         if combat_status.debuffs[self.debuff_id]:
@@ -72,7 +86,7 @@ class UseAllBuff(Cost):
         self.buff_id = buff_id
 
     def has_cost(self, combat_status: CombatStatus):
-        return True 
+        return True
 
     def use(self, combat_status: CombatStatus):
         combat_status.buffs[self.buff_id] = None
@@ -83,10 +97,11 @@ class UseAllDebuff(Cost):
         self.debuff_id = debuff_id
 
     def has_cost(self, combat_status: CombatStatus):
-        return True 
+        return True
 
     def use(self, combat_status: CombatStatus):
         combat_status.debuffs[self.debuff_id] = None
+
 
 class DoesNotHaveBuff(Cost):
     def __init__(self, buff_id: int):
@@ -94,7 +109,6 @@ class DoesNotHaveBuff(Cost):
 
     def has_cost(self, combat_status: CombatStatus):
         return not combat_status.buffs[self.buff_id]
-    
+
     def use(self, combat_status: CombatStatus):
         pass
-

@@ -7,16 +7,11 @@ from dataclasses import dataclass
 
 
 class ComboData:
-    def __init__(
-        self,
-        *,
-        combo_potency: int,
-        next_combo: int,
-        required_combo 
-    ):
+    def __init__(self, *, combo_potency: int, next_combo: int, required_combo):
         self.combo_potency = combo_potency
         self.next_combo = next_combo
         self.required_combo = required_combo
+
 
 @dataclass
 class DelayData:
@@ -25,24 +20,25 @@ class DelayData:
     charge_time_millisecond: int
     cast_time_millisecond: int
 
+
 class Skill:
-    """Implements skill characteristics for FFXIV Combat Class 
+    """Implements skill characteristics for FFXIV Combat Class
 
     charge_time_millisecond: time it takes to charge the skill - skills like raiton need time to cast mudras. We abstract them out as charge time and add delay time before applying the skill.
     """
 
     def __init__(
-        self, 
+        self,
         *,
-        skill_id: int, 
-        name: str, 
-        potency: int, 
+        skill_id: int,
+        name: str,
+        potency: int,
         max_stacks: int,
         gcd_cooldown_millisecond: int,
-        cooldown_millisecond: int, 
-        cast_time_millisecond: int, 
-        charge_time_millisecond: int, 
-        delay_millisecond: int, 
+        cooldown_millisecond: int,
+        cast_time_millisecond: int,
+        charge_time_millisecond: int,
+        delay_millisecond: int,
         cost: list[Cost],
         events: list[StatusEvent],
         cancel_events: list[StatusEvent],
@@ -52,18 +48,22 @@ class Skill:
         next_combo,
         required_combo,
         is_combo=False,
-        bonus_potency_if_resource = None, 
-        proc_events=None
+        bonus_potency_if_resource=None,
+        proc_events=None,
     ):
         self.skill_id = skill_id
         self.name = name
         self.potency = potency
         self.max_stacks = max_stacks
-        self.stacks = max_stacks 
+        self.stacks = max_stacks
 
         self.delay_data = DelayData(
             gcd_cooldown_millisecond=gcd_cooldown_millisecond,
-            delay_millisecond=DEFAULT_DELAY_MILLISECOND if delay_millisecond is None else delay_millisecond,
+            delay_millisecond=(
+                DEFAULT_DELAY_MILLISECOND
+                if delay_millisecond is None
+                else delay_millisecond
+            ),
             cast_time_millisecond=cast_time_millisecond,
             charge_time_millisecond=charge_time_millisecond,
         )
@@ -88,7 +88,9 @@ class Skill:
             )
 
     def start_cooldown(self):
-        assert self.stacks > 0, f"start_cooldown called when stack == 0, {self.name}, {self.skill_id}"
+        assert (
+            self.stacks > 0
+        ), f"start_cooldown called when stack == 0, {self.name}, {self.skill_id}"
         self.stacks -= 1
         self.current_cooldown_millisecond += self.cooldown_millisecond
 
@@ -110,28 +112,9 @@ class Skill:
 
         return True
 
-
-    def use_skill(self, combat_status):
-        """Simulate all events and triggers and status changes that happen when the skill is used.
-
-        1) Start skill cooldown
-        2) Activated trigger buffs 
-        3) Apply buffs and debuffs damage buff
-        4) Advance time if there is charge time
-        5) Update status changes 
-        """
-        logging.debug(f"Using {self.name} on {combat_status.combat_time_millisecond}")
-        
-        if self.cooldown_skill_id:
-            combat_status.skills[self.cooldown_skill_id - 1].start_cooldown()
-        else:
-            self.start_cooldown()
-
-        potency = self.potency
-
-        combat_status.advance_time(self.delay_data.charge_time_millisecond)
+    def _calculate_total_damage_increase(self, combat_status):
         total_damage_increase = 1
-        
+
         for buff in combat_status.buffs:
             if buff:
                 total_damage_increase *= buff.get_damage_increase()
@@ -140,6 +123,9 @@ class Skill:
             if debuff:
                 total_damage_increase *= debuff.get_damage_increase()
 
+        return total_damage_increase
+
+    def _simulate_skill_status_changes(self, combat_status):
         for cost in self.cost:
             cost.use(combat_status)
 
@@ -149,15 +135,41 @@ class Skill:
         for cancel_event in self.cancel_events:
             cancel_event.use(combat_status)
 
+    def _calculate_potency_and_combo_update(self, combat_status):
+        potency = self.potency
+
         if self.combo_data:
             if self.combo_data.required_combo:
                 if self.combo_data.required_combo == combat_status.combo:
-                    combat_status.update_combo(self.combo_data.next_combo)
                     potency = self.combo_data.combo_potency
-                else: 
+                else:
                     combat_status.update_combo(0)
             else:
                 combat_status.update_combo(self.combo_data.next_combo)
+
+        return potency
+
+    def use_skill(self, combat_status):
+        """Simulate all events and triggers and status changes that happen when the skill is used.
+
+        1) Start skill cooldown
+        2) Activated trigger buffs
+        3) Apply buffs and debuffs damage buff
+        4) Advance time if there is charge time
+        5) Update status changes
+        """
+        logging.debug(f"Using {self.name} on {combat_status.combat_time_millisecond}")
+
+        if self.cooldown_skill_id:
+            combat_status.skills[self.cooldown_skill_id - 1].start_cooldown()
+        else:
+            self.start_cooldown()
+
+        combat_status.advance_time(self.delay_data.charge_time_millisecond)
+
+        total_damage_increase = self._calculate_total_damage_increase(combat_status)
+        self._simulate_skill_status_changes(combat_status)
+        potency = self._calculate_potency_and_combo_update(combat_status)
 
         for buff in combat_status.buffs:
             if buff:
@@ -171,10 +183,10 @@ class Skill:
                         resource_event.handle_event(combat_status)
 
         if self.bonus_potency_if_resource:
-            if combat_status.resources[self.bonus_potency_if_resource[0]].current_stacks >= 1: 
-                potency += self.bonus_potency_if_resource[1]
-                combat_status.resources[self.bonus_potency_if_resource[0]].current_stacks -= 1
-
+            [resource_id, bonus_potency] = self.bonus_potency_if_resource
+            if combat_status.resources[resource_id].current_stacks >= 1:
+                potency += bonus_potency
+                combat_status.resources[resource_id].current_stacks -= 1
 
         return potency * total_damage_increase, self.delay_data
 
@@ -183,16 +195,26 @@ class Skill:
             self.stacks = self.max_stacks
             return
 
-        prev_stack = int(math.ceil(self.current_cooldown_millisecond / self.cooldown_millisecond))
-        self.current_cooldown_millisecond = max(0, self.current_cooldown_millisecond - delta_time_millisecond)
+        prev_stack = int(
+            math.ceil(self.current_cooldown_millisecond / self.cooldown_millisecond)
+        )
 
-        current_stack = int(math.ceil(self.current_cooldown_millisecond / self.cooldown_millisecond))
+        self.current_cooldown_millisecond = max(
+            0, self.current_cooldown_millisecond - delta_time_millisecond
+        )
+
+        current_stack = int(
+            math.ceil(self.current_cooldown_millisecond / self.cooldown_millisecond)
+        )
 
         if prev_stack != current_stack:
-            self.stacks += 1 
+            self.stacks += 1
 
     def get_state(self):
         if self.cooldown_skill_id:
             return list()
         else:
-            return [self.current_cooldown_millisecond / max(1, self.cooldown_millisecond), self.stacks / max(1, self.max_stacks)]
+            return [
+                self.current_cooldown_millisecond / max(1, self.cooldown_millisecond),
+                self.stacks / max(1, self.max_stacks),
+            ]
