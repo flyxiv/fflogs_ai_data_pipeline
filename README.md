@@ -1,23 +1,38 @@
-# fflogs_ai_data_pipeline
+# FFXIV Rotation AI Model Using Reinforcement Learning
 
-Data engineering pipeline to collect rotation logs. The logs will be used to train AI models.
+![diagram](./images/diagram.png)
 
 # Environment
 
 - Python 3.11
-- fflogsapi(https://github.com/halworsen/fflogsapi)
 
 ```
-$ pip install fflogsapi
+python -m venv venv
+
+# Windows user
+$ . venv/Scripts/activate 
+
+# Linux user
+$ . venv/bin/activate
+
+# install environment
+$ pip install -e .
+
 ```
 
-# How to setup
+# How to run
+```sh
+# 1. run dqn agent inference
+$ python -m rotation_models.inference --model-type dqn --model-path .\ninja_model_dqn.keras --output-path .\ninja_rotation_log_dqn.csv
+
+# 2. run ppo agent inference 
+$ python -m rotation_models.inference --model-type dqn --model-path .\ninja_model_dqn.keras --output-path .\ninja_rotation_log_dqn.csv
+```
+
+# How to setup FFLogs credentials for scraping(Optional)
 
 1. Create Fflogs API username and key
 2. Save the credentials in config.yml
 
 ![credentials](./images/credentials.png)
 
-# Structure
-
-![diagram](./images/diagram.png)
