@@ -25,6 +25,9 @@ class Skill:
     """Implements skill characteristics for FFXIV Combat Class
 
     charge_time_millisecond: time it takes to charge the skill - skills like raiton need time to cast mudras. We abstract them out as charge time and add delay time before applying the skill.
+    gcd_cooldown_millisecond: cooldown time for skills that are GCD skills
+    cast_time_millisecond: time it takes to cast the skill. Used for casting spells 
+    delay_millisecond: FFXIV has a default 0.7ms delay after using each skill. However some skills have shorter/longer delays. We automatically advance time by this delay after using the skill, since the character can't do anything during the delay.
     """
 
     def __init__(
@@ -142,6 +145,7 @@ class Skill:
             if self.combo_data.required_combo:
                 if self.combo_data.required_combo == combat_status.combo:
                     potency = self.combo_data.combo_potency
+                    combat_status.update_combo(self.combo_data.next_combo)
                 else:
                     combat_status.update_combo(0)
             else:

@@ -1,10 +1,17 @@
 from dataclasses import dataclass
 
-class Resource:
-    """Abstraction for stacks needed for skills in jobs, such as Ninki and Shuriken.
-    """
 
-    def __init__(self, id: int, name: str, max_stacks: int, start_with_full_stacks: bool = False, regen_time_millisecond: int = None):
+class Resource:
+    """Abstraction for stacks needed for skills in jobs, such as Ninki and Shuriken."""
+
+    def __init__(
+        self,
+        id: int,
+        name: str,
+        max_stacks: int,
+        start_with_full_stacks: bool = False,
+        regen_time_millisecond: int = None,
+    ):
         self.id = id
         self.name = name
         self.max_stacks = max_stacks
@@ -34,7 +41,8 @@ class Resource:
     def get_state(self):
         stacks_state = [self.current_stacks / self.max_stacks]
         if self.regen_time_millisecond:
-            stacks_state.append(self.current_regen_time_millisecond / self.regen_time_millisecond)
+            stacks_state.append(
+                self.current_regen_time_millisecond / self.regen_time_millisecond
+            )
 
         return stacks_state
-

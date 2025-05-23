@@ -3,7 +3,7 @@
 run example: in fflogs_ai_data_pipeline directory,
 
 ```sh
-python -m fflogspipeline.extractor.report_extractor
+python -m fflogspipeline.extractor.report_extractor --fflogs-ranking-url ./fflogspipeline/extractor/ninja_ranking_urls.yml
 ```
 """
 
@@ -13,6 +13,7 @@ from selenium.webdriver.chrome.options import Options
 from typing import List
 from pathlib import Path
 
+import argparse
 import logging
 import re
 import pathlib
@@ -23,6 +24,10 @@ import logging
 from ..util import HTTP_RESPONSE_OK
 from ..rotationlog.fflogs_report_parser import FflogsReportParser
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fflogs-ranking-url", type=str, required=False, help="path to the file that contains the URL of the job's ranking page")
+    return parser.parse_args()
 
 class ReportExtractor:
     """Extracts URL of logs inside a DPS ranking directory.
@@ -106,12 +111,18 @@ class ReportExtractor:
 
 
 if __name__ == "__main__":
-    _EXTRACTOR_FILE_DIR = Path(__file__).resolve().parent
+    args = parse_args()
 
-    NINJA_REPORT_EXTRACTOR = ReportExtractor(
-        _EXTRACTOR_FILE_DIR / "./ninja_ranking_urls.yml"
-    )
-    NINJA_REPORT_EXTRACTOR.parse_reports()
+    if args.fflogs_ranking_url:
+        report_extractor = ReportExtractor(args.fflogs_ranking_url)
+    else:
+        _EXTRACTOR_FILE_DIR = Path(__file__).resolve().parent
+
+        report_extractor = ReportExtractor(
+            _EXTRACTOR_FILE_DIR / "./ninja_ranking_urls.yml"
+        )
+
+    report_extractor.parse_reports()
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)s:%(message)s",

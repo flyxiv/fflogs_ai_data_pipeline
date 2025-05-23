@@ -10,6 +10,7 @@ import random
 import keras
 from ..const import IMPOSSIBLE_PENALTY, EPSILON_P
 from ..experience import Experience
+from .build_dense_network import build_dense_network
 
 from util.sum_tree import SumTree
 
@@ -68,18 +69,14 @@ class FFXIVDQNAgent:
         # Override this network to use a different architecture.
 
         inp = keras.layers.Input(shape=(self.state_size,))
-        dense = keras.layers.Dense(32, name='dense1', activation='relu')(inp)
-        batch_norm = keras.layers.BatchNormalization()(dense)
-        dense2 = keras.layers.Dense(64, name='dense2', activation='relu')(batch_norm)
-        batch_norm2 = keras.layers.BatchNormalization()(dense2)
-        dense3 = keras.layers.Dense(128, name='dense3', activation='relu')(batch_norm2)
-        batch_norm3 = keras.layers.BatchNormalization()(dense3)
-        dense4 = keras.layers.Dense(64, name='dense4', activation='relu')(batch_norm3)
-        batch_norm4 = keras.layers.BatchNormalization()(dense4)
+        dense_networks = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128, 64])
+        inp2 = dense_networks[0](inp)
+        for dense_network in dense_networks[1:]:
+            inp2 = dense_network(inp2)
         advantage_output = keras.layers.Dense(
-            self.action_size)(batch_norm4)
+            self.action_size, name='advantage_output')(inp2)
 
-        state_output = keras.layers.Dense(1)(dense4)
+        state_output = keras.layers.Dense(1, name='state_output')(inp2)
 
         model = keras.Model(inputs=inp, outputs=[advantage_output, state_output])
 

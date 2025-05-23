@@ -5,6 +5,7 @@ FFLogs AI data pipeline only needs combat related events, which are cast events
 
 import pathlib
 import json
+import logging
 
 from fflogspipeline.ffxivsystem.job import FFXIV_JOB_NAMES_TO_COMBAT_JOB_MAPPING
 from fflogspipeline.ffxivsystem.errors import FfxivRotationPipelineInvalidPartySize, FfxivRotationPipelineInvalidJobName
@@ -38,8 +39,7 @@ class FflogsReportParser:
         """ Creates player id -> FfxivCombatJob enum mapping for the players in the fight
 
         Raises:
-           1) FfxivRotationPipelineInvalidJobName if the job name is not in the ffxiv job to job name mapping
-           2) FfxivRotationPipelineInvalidPartySize if the party size is invalid
+            FfxivRotationPipelineInvalidJobName if the job name is not in the ffxiv job to job name mapping
         """
         player_id_to_job_mapping = {}
         for player_detail in player_details:
@@ -48,15 +48,12 @@ class FflogsReportParser:
             if job_name in FFXIV_JOB_NAMES_TO_COMBAT_JOB_MAPPING:
                 player_id_to_job_mapping[player_detail.id] = job_name
             else:
-                raise FfxivRotationPipelineInvalidJobName
+                raise FfxivRotationPipelineInvalidJobName(job_name)
                
-        if len(player_id_to_job_mapping) != FFXIV_STANDARD_PARTY_SIZE:
-            raise FfxivRotationPipelineInvalidPartySize 
-            
         return player_id_to_job_mapping 
 
     def __collect_only_cast_events(self, fight_events):
-        return (report_event for report_event in fight_events if report_event['type'] == CAST_EVENT_TYPE_NAME)
+        return [report_event for report_event in fight_events if report_event['type'] == CAST_EVENT_TYPE_NAME]
     
     def parse_report(self, report_key: str) -> List[FightData]:
         """
@@ -71,25 +68,32 @@ class FflogsReportParser:
         Writes:
             Saves parsed rotation log in data/<report_key>.json
         """
-        print(f"report_key: {report_key}")
+        logging.info(f"report_key: {report_key}")
         report = self.__fetch_report(report_key)
-        kill_fights = [fight for fight in report.fights() if fight.is_kill() and fight.standard_comp()] 
-        fight_ids = [fight.id for fight in kill_fights]
-        player_id_job_mappings = [self.__create_player_id_to_job_mapping(kill_fight.player_details()) for kill_fight in kill_fights]
+        try:
+            kill_fights = [fight for fight in report.fights() if fight.is_kill() and fight.standard_comp() and len(fight.player_details()) == FFXIV_STANDARD_PARTY_SIZE] 
+            fight_ids = [fight.id for fight in kill_fights]
+            player_id_job_mappings = [self.__create_player_id_to_job_mapping(kill_fight.player_details()) for kill_fight in kill_fights]
+            cast_events_list = [self.__collect_only_cast_events(kill_fight.events()) for kill_fight in kill_fights]
 
-        cast_events_list = [self.__collect_only_cast_events(kill_fight.events()) for kill_fight in kill_fights]
+            fight_datas = []
 
-        fight_datas = []
-
-        for (fight_id, player_id_job_mapping, cast_events) in zip(fight_ids, player_id_job_mappings, cast_events_list):
-            fight_datas.append(FightData(report_key=report_key, fight_id=fight_id, player_id_job_mapping=player_id_job_mapping, events=cast_events))
+            for (fight_id, player_id_job_mapping, cast_events) in zip(fight_ids, player_id_job_mappings, cast_events_list):
+                fight_datas.append(FightData(report_key=report_key, fight_id=fight_id, player_id_job_mapping=player_id_job_mapping, events=cast_events))
 
 
-        data_dir = pathlib.Path.cwd() / 'data'
-        
-        json_file_path = data_dir / f'{report_key}.json'
+            data_dir = pathlib.Path.cwd() / 'data'
+            
+            json_file_path = data_dir / f'{report_key}.json'
 
-        with open(json_file_path, 'w') as json_file:
-            json.dump([fight_data.__dict__ for fight_data in fight_datas])
+            try:
+                with open(json_file_path, 'w') as json_file:
+                    json.dump([fight_data.__dict__ for fight_data in fight_datas], json_file, indent=4)
 
-        return fight_datas
+            except Exception as e:
+                logging.error(f"Error writing to {json_file_path}: {e}")
+
+            return fight_datas
+        except Exception as e:
+            logging.error(f"Error parsing report: {e}")
+            return []

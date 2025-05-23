@@ -1,13 +1,12 @@
-"""Defines components needed for training environment for specific FFXIV jobs for reinforcement learning models to train on.
-"""
+"""Defines components needed for training environment for specific FFXIV jobs for reinforcement learning models to train on."""
 
 from abc import abstractmethod
 import tensorflow as tf
 import numpy as np
 
+
 class FFXIVEnvironment:
-    """Virtual class defining common APIs for training environment of FFXIV jobs 
-    """
+    """Virtual class defining common APIs for training environment of FFXIV jobs"""
 
     def __init__(self, target_time_millisecond: int):
         self.target_time_millisecond = target_time_millisecond
@@ -31,11 +30,13 @@ class FFXIVEnvironment:
         * If the action_id i is not usable, `A[i] = 0`
         """
         pass
-    
+
     @abstractmethod
-    def step(self, action_id, debug_mode=False) -> tuple[tf.Tensor, np.array, int, float, bool]:
+    def step(
+        self, action_id, debug_mode=False
+    ) -> tuple[tf.Tensor, np.array, int, float, bool]:
         """Do the selected action_id and return the result of the action
-        
+
         Args:
             action_id (int): The action to do
             debug_mode (bool): Whether to print debug information
@@ -44,7 +45,7 @@ class FFXIVEnvironment:
             1) The next state of the environment as a tensor
             2) The valid actions in the next state as a numpy array
             3) The combat time of the next step as an integer
-            4) The reward for the action 
+            4) The reward for the action
             5) Done flag as a boolean
         """
         pass

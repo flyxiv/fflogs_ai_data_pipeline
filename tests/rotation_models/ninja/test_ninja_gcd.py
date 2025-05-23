@@ -19,6 +19,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 1, f"combo should be 1, but it is {self.ninja_environment.combo}"
 
 
+        # Gush Slash should give weak potency when combo is 0
         self.ninja_environment.reset()
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.GUST_SLASH.value)
         potency = int(round(reward * MAX_POTENCY))
@@ -28,6 +29,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 0, f"combo should be 0, but it is {self.ninja_environment.combo}"
 
 
+        # Aeolian Edge should give weak potency when combo is 0
         self.ninja_environment.reset()
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.AEOLIAN_EDGE.value)
         potency = int(round(reward * MAX_POTENCY))
@@ -38,6 +40,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 0, f"combo should be 0, but it is {self.ninja_environment.combo}"
 
 
+        # Armor Crush should give weak potency when combo is 0
         self.ninja_environment.reset()
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.ARMOR_CRUSH.value)
         potency = int(round(reward * MAX_POTENCY))
@@ -48,7 +51,8 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 0, f"combo should be 0, but it is {self.ninja_environment.combo}"
 
 
-        # if combo is 0 but has shuriken, aeolian edge should use the shuriken for 100 additional potency
+        # Bonus Test:
+        # if combo is 0 but ninja has a shuriken stack, aeolian edge should use the shuriken for 100 additional potency
         self.ninja_environment.reset()
         self.ninja_environment.resources[NinjaResources.SHURIKEN.value].current_stacks = 1
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.AEOLIAN_EDGE.value)
@@ -70,6 +74,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 1
 
 
+        # Gush Slash should give full potency and generate ninki when combo is 1
         self.ninja_environment.reset()
         self.ninja_environment.combo = 1
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.GUST_SLASH.value)
@@ -80,6 +85,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 2, f"combo should be 2, but it is {self.ninja_environment.combo}"
 
 
+        # Aeolian Edge should give weak potency when combo is 1
         self.ninja_environment.reset()
         self.ninja_environment.combo = 1
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.AEOLIAN_EDGE.value)
@@ -91,6 +97,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 0, f"combo should be 0, but it is {self.ninja_environment.combo}"
 
 
+        # Armor Crush should give weak potency when combo is 1
         self.ninja_environment.reset()
         self.ninja_environment.combo = 1
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.ARMOR_CRUSH.value)
@@ -102,7 +109,8 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 0, f"combo should be 0, but it is {self.ninja_environment.combo}"
 
 
-        # if combo is 1 but has shuriken, aeolian edge should use the shuriken for 100 additional potency
+        # Bonus Test:
+        # if combo is 1 but ninja has a shuriken stack, aeolian edge should use the shuriken for 100 additional potency
         self.ninja_environment.reset()
         self.ninja_environment.combo = 1
         self.ninja_environment.resources[NinjaResources.SHURIKEN.value].current_stacks = 2
@@ -125,6 +133,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 1, f"combo should be 1, but it is {self.ninja_environment.combo}"
 
 
+        # Gush Slash should give weak potency when combo is 2
         self.ninja_environment.reset()
         self.ninja_environment.combo = 2
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.GUST_SLASH.value)
@@ -135,6 +144,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 0, f"combo should be 0, but it is {self.ninja_environment.combo}"
 
 
+        # Aeolian Edge should give full potency and generate ninki when combo is 2
         self.ninja_environment.reset()
         self.ninja_environment.combo = 2
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.AEOLIAN_EDGE.value)
@@ -146,6 +156,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.combo == 0, f"combo should be 0, but it is {self.ninja_environment.combo}"
 
 
+        # Armor Crush should give full potency and generate ninki when combo is 2 
         self.ninja_environment.reset()
         self.ninja_environment.combo = 2
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.ARMOR_CRUSH.value)
@@ -157,7 +168,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.resources[NinjaResources.SHURIKEN.value].current_stacks == 2, f"shuriken should be 2, but it is {self.ninja_environment.resources[NinjaResources.SHURIKEN.value].current_stacks}"
 
 
-        # if combo is 2 but has shuriken, aeolian edge should use the shuriken for 100 additional potency
+        # if combo is 2 and ninja has shuriken, aeolian edge should use the shuriken for 100 additional potency
         self.ninja_environment.reset()
         self.ninja_environment.combo = 2
         self.ninja_environment.resources[NinjaResources.SHURIKEN.value].current_stacks = 2
@@ -177,7 +188,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks == 100, f"ninki should be 100, but it is {self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks}"
 
 
-        # 2. Armor Crush @ 100 Ninki and 4 shuriken, still 100 and only 5 shuriken
+        # 2. Armor Crush @ 100 Ninki and 4 shuriken, ninki is 100 and only 5 shuriken
         self.ninja_environment.reset()
         self.ninja_environment.combo = 2
         self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks = 100
@@ -188,6 +199,8 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.resources[NinjaResources.SHURIKEN.value].current_stacks == 5, f"shuriken should be 5, but it is {self.ninja_environment.resources[NinjaResources.SHURIKEN.value].current_stacks}"
     
     def test_ninja_bunshin(self):
+
+        # start with 100 ninki and use bunshin: 50 ninki, 5 bunshin stacks
         self.ninja_environment.reset()
         self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks = 100
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.BUNSHIN.value)
@@ -200,6 +213,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks == 50, f"ninki should be 50, but it is {self.ninja_environment.resources[NinjaStacks.NINKI.value].current_stacks}"
         assert reward == 0, f"reward should be 0, but it is {reward}"
 
+        # use aeolian edge: generates 15 + 5 = 20 ninki (50 + 20 = 70 total), 4 bunshin stacks
         self.ninja_environment.combo = 2
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.AEOLIAN_EDGE.value)
         potency = int(round(reward * MAX_POTENCY))
@@ -211,6 +225,8 @@ class NinjaGCDTest(unittest.TestCase):
         # 460 + bunshin potency 160 = 620
         assert potency == 620, f"potency should be 620, but it is {potency}"
 
+
+        # Use Raiton: still 70 ninki, 4 bunshin stacks, raiju_ready must be stacked to 1
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.RAITON.value)
         potency = int(round(reward * MAX_POTENCY))
         assert potency == 740, f"potency should be 740, but it is {potency}"
@@ -222,6 +238,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks == 70, f"ninki should be 70, but it is {self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks}"
         assert bunshin_status.current_stacks == 4, f"bunshin should be 4, but it is {bunshin_status.current_stacks}"
 
+        # Use Raiton: still 70 ninki, 4 bunshin stacks, raiju_ready must be stacked to 2
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.RAITON.value)
         potency = int(round(reward * MAX_POTENCY))
         assert potency == 740, f"potency should be 740, but it is {potency}"
@@ -232,6 +249,7 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks == 70, f"ninki should be 70, but it is {self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks}"
         assert bunshin_status.current_stacks == 4, f"bunshin should be 4, but it is {bunshin_status.current_stacks}"
 
+        # Use Fleeting Raiju: generate 5 + 5 = 10 ninki(80 ninki total), 3 bunshin stacks, raiju_ready must be stacked to 1
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.FLEETING_RAIJU.value)
         potency = int(round(reward * MAX_POTENCY))
         assert potency == 860, f"potency should be 860, but it is {potency}"
@@ -242,6 +260,9 @@ class NinjaGCDTest(unittest.TestCase):
         assert self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks == 80, f"ninki should be 80, but it is {self.ninja_environment.resources[NinjaResources.NINKI.value].current_stacks}"
         assert bunshin_status.current_stacks == 3, f"bunshin should be 3, but it is {bunshin_status.current_stacks}"
 
+
+        # Using gust slash while raiju_ready is 1 should destroy the raiju_ready buff
+        # generate 5 ninki (total 85), 2 bunshin stacks
         _, _, _, reward, _ = self.ninja_environment.use_skill(NinjaSkills.GUST_SLASH.value)
         potency = int(round(reward * MAX_POTENCY))
         assert potency == 400, f"potency should be 400, but it is {potency}"
