@@ -22,7 +22,10 @@ from .train_agents.ffxiv_ppo_agent import FFXIVPPOAgent
 from .create_ffxiv_environment import create_ffxiv_environment
 from .experience import Experience
 from .inference import inference 
+import warnings
 
+warnings.filterwarnings("ignore", message="Gradients do not exist for variables .*state_output/kernel:0.*")
+warnings.filterwarnings("ignore", message="Gradients do not exist for variables .*state_output/bias:0.*")
 
 CHECKPOINT_EPOCHS = 10
 
