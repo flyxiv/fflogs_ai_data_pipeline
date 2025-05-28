@@ -70,13 +70,13 @@ def pretrain(
         environment = create_ffxiv_environment(class_name, 10000, COMBAT_START_TIME_MILLISECOND)
         if model_type == "dqn":
             network = FFXIVDQNAgent(
-                state_sizes=environment.state_sizes,
+                state_size=environment.state_size,
                 action_size=environment.action_size,
                 replay_period=10,
             ).duel_q_network
         elif model_type == "ppo":
             network = FFXIVPPOAgent(
-                state_sizes=environment.state_size,
+                state_size=environment.state_size,
                 action_size=environment.action_size,
                 epsilon=0.2,
             ).new_model
@@ -123,24 +123,39 @@ def pretrain(
                             gradients = tape.gradient(loss, network.trainable_variables)
                             optimizer.apply_gradients(zip(gradients, network.trainable_variables))
 
-                            next_state, next_valid_actions, current_time_millisecond, _, _ = (
-                                environment.use_skill(rotations[rotation_cnt])
-                            )
+                        next_state, next_valid_actions, current_time_millisecond, _, _ = (
+                            environment.use_skill(rotations[rotation_cnt])
+                        )
 
-                            logging.debug(
-                                f"valid_actions: {[NinjaSkills(idx).name for idx, action in enumerate(valid_actions) if action > 0 and idx > 0]}"
-                            )
-                            logging.debug(current_time_millisecond)
+                        logging.debug(
+                            f"valid_actions: {[NinjaSkills(idx).name for idx, action in enumerate(valid_actions) if action > 0 and idx > 0]}"
+                        )
+                        logging.debug(current_time_millisecond)
 
-                            valid_actions = next_valid_actions
-                            state = next_state
+                        valid_actions = next_valid_actions
+                        state = next_state
 
-                            rotation_cnt += 1
+                        rotation_cnt += 1
 
-                            if rotation_cnt <= len(rotations) - 1:
-                                logging.debug(f"NINKI: {environment.resources[NinjaResources.NINKI.value].current_stacks}")
-                                logging.debug(NinjaSkills(rotations[rotation_cnt]).name)
+                        if rotation_cnt <= len(rotations) - 1:
+                            logging.debug(f"NINKI: {environment.resources[NinjaResources.NINKI.value].current_stacks}")
+                            logging.debug(NinjaSkills(rotations[rotation_cnt]).name)
                     else:
+                        with tf.GradientTape() as tape:
+                            if model_type == "dqn":
+                                action_outputs, _ = network(state)
+                                action_outputs_percentage = tf.nn.softmax(action_outputs)
+                            elif model_type == "ppo":
+                                action_outputs, _ = network([state, tf.reshape(valid_actions, [1, -1])])
+                                action_outputs_percentage = tf.nn.softmax(action_outputs)
+
+                            answer = tf.reshape(tf.one_hot(rotations[rotation_cnt], action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
+                            loss = loss_function(answer, action_outputs_percentage)
+                            gradients = tape.gradient(loss, network.trainable_variables)
+
+                            if consecutive_rests < 22:
+                                optimizer.apply_gradients(zip(gradients, network.trainable_variables))
+
                         next_state, next_valid_actions, current_time_millisecond, _, _ = environment.use_skill(0)
                         valid_actions = next_valid_actions
                         state = next_state
