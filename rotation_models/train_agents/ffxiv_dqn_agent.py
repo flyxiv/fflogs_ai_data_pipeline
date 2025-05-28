@@ -68,7 +68,7 @@ class FFXIVDQNAgent:
     def _build_network(self):
         # Override this network to use a different architecture.
 
-        skill_states = keras.layers.Input(shape=(self.state_sizes['skill_states']), name="skill_states")
+        skill_states = keras.layers.Input(shape=(self.state_sizes['skill_states'],), name="skill_states")
         gcd_skill_states = keras.layers.Input(shape=(self.state_sizes['gcd_skill_states'],), name="gcd_skill_states")
         status_states = keras.layers.Input(shape=(self.state_sizes['status_states'],), name="status_states")
         resource_states = keras.layers.Input(shape=(self.state_sizes['resource_states'],), name="resource_states")

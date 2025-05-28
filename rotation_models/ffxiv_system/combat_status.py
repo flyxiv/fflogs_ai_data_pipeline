@@ -49,7 +49,8 @@ class CombatStatus:
         )
 
         state = self.get_state()
-        self.state_size = state.shape[1]
+        print(state)
+        self.state_sizes = {k: tf.shape(v)[1] for (k, v) in state.items()} 
         self.action_size = len(self.skills) + 1
 
     def reset(self):
@@ -173,8 +174,7 @@ class CombatStatus:
             else:
                 resource_states.extend([0, 0])
 
-        combo_states = 
-            [
+        combo_states = [
                 self.combo / 3,
                 (
                     self.combo_duration_millisecond / COMBO_TIMER_MAX_MILLISECOND

@@ -70,13 +70,13 @@ def pretrain(
         environment = create_ffxiv_environment(class_name, 10000, COMBAT_START_TIME_MILLISECOND)
         if model_type == "dqn":
             network = FFXIVDQNAgent(
-                state_size=environment.state_size,
+                state_sizes=environment.state_sizes,
                 action_size=environment.action_size,
                 replay_period=10,
             ).duel_q_network
         elif model_type == "ppo":
             network = FFXIVPPOAgent(
-                state_size=environment.state_size,
+                state_sizes=environment.state_size,
                 action_size=environment.action_size,
                 epsilon=0.2,
             ).new_model
