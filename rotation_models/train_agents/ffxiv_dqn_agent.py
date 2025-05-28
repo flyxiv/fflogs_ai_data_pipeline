@@ -25,8 +25,8 @@ class FFXIVDQNAgent:
     Uses ranking based experience replay weight. 
     0 is the "do nothing" action
     """
-    def __init__(self, state_size, action_size, replay_period: int = 32, model_path=None):
-        self.state_size = state_size
+    def __init__(self, state_sizes, action_size, replay_period: int = 32, model_path=None):
+        self.state_sizes = state_sizes
         self.action_size = action_size
 
         # Replay buffer related
@@ -68,17 +68,50 @@ class FFXIVDQNAgent:
     def _build_network(self):
         # Override this network to use a different architecture.
 
-        inp = keras.layers.Input(shape=(self.state_size,))
-        dense_networks = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128, 64])
-        inp2 = dense_networks[0](inp)
-        for dense_network in dense_networks[1:]:
+        skill_states = keras.layers.Input(shape=(self.state_sizes['skill_states']), name="skill_states")
+        gcd_skill_states = keras.layers.Input(shape=(self.state_sizes['gcd_skill_states'],), name="gcd_skill_states")
+        status_states = keras.layers.Input(shape=(self.state_sizes['status_states'],), name="status_states")
+        resource_states = keras.layers.Input(shape=(self.state_sizes['resource_states'],), name="resource_states")
+        combo_states = keras.layers.Input(shape=(self.state_sizes['combo_states'],), name="combo_states")
+        gcd_state = keras.layers.Input(shape=(self.state_sizes['gcd_state'],), name="gcd_state")
+        time_state = keras.layers.Input(shape=(self.state_sizes['time_state'],), name="time_state")
+
+        gcd_dense_networks = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128, 64])
+        ogcd_dense_networks = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128, 64])
+
+        gcd_advantage_output_layer = keras.layers.Dense(self.action_size, name='advantage_output_gcd')
+        ogcd_advantage_output_layer = keras.layers.Dense(self.action_size - 13, name='advantage_output_ogcd')
+
+        gcd_state_output_layer = keras.layers.Dense(1, name='state_output_gcd')
+        ogcd_state_output_layer = keras.layers.Dense(1, name='state_output_ogcd')
+
+        if gcd_state == 0:
+            input_tensor = skill_states
+            target_network = gcd_dense_networks
+            advantage_output_layer = gcd_advantage_output_layer
+            state_output_layer = gcd_state_output_layer
+        else:
+            input_tensor = gcd_skill_states
+            target_network = ogcd_dense_networks
+            advantage_output_layer = ogcd_advantage_output_layer
+            state_output_layer = ogcd_state_output_layer
+
+        inp2 = target_network[0](input_tensor)
+        for dense_network in target_network[1:]:
             inp2 = dense_network(inp2)
-        advantage_output = keras.layers.Dense(
-            self.action_size, name='advantage_output')(inp2)
 
-        state_output = keras.layers.Dense(1, name='state_output')(inp2)
+        advantage_output = advantage_output_layer(inp2)
 
-        model = keras.Model(inputs=inp, outputs=[advantage_output, state_output])
+        if gcd_state != 0:
+            gcd_outputs = tf.reshape(tf.constant([0] * 13, dtype=tf.float32), (1, -1))
+            advantage_output = tf.concat([gcd_outputs, advantage_output], axis=1)
+
+        state_output = state_output_layer(inp2)
+
+        if gcd_state != 0:
+            state_output = tf.concat([gcd_outputs, state_output], axis=1)
+
+        model = keras.Model(inputs=[skill_states, gcd_skill_states, status_states, resource_states, combo_states, gcd_state, time_state], outputs=[advantage_output, state_output])
 
         return model
 

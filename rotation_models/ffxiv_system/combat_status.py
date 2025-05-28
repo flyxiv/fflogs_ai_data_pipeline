@@ -146,42 +146,56 @@ class CombatStatus:
         )
 
     def get_state(self):
-        states = []
+        skill_states = []
+        for skill in self.skills:
+            assert skill is not None
+            skill_states.extend(skill.get_state())
+        
+        gcd_skill_states = skill_states[:14]
 
+        status_states = []
         for buff in self.buffs:
             if buff:
-                states.extend(buff.get_state())
+                status_states.extend(buff.get_state())
             else:
-                states.extend([0, 0])
+                status_states.extend([0, 0])
 
         for debuff in self.debuffs:
             if debuff:
-                states.extend(debuff.get_state())
+                status_states.extend(debuff.get_state())
             else:
-                states.extend([0, 0])
+                status_states.extend([0, 0])
 
+        resource_states = []
         for resource in self.resources:
             if resource:
-                states.extend(resource.get_state())
+                resource_states.extend(resource.get_state())
             else:
-                states.extend([0, 0])
+                resource_states.extend([0, 0])
 
-        for skill in self.skills:
-            assert skill is not None
-            states.extend(skill.get_state())
-
-        states.extend(
+        combo_states = 
             [
                 self.combo / 3,
                 (
                     self.combo_duration_millisecond / COMBO_TIMER_MAX_MILLISECOND
                     if self.combo_duration_millisecond
-                    else 10
+                    else 1
                 ),
             ]
-        )
 
-        states.extend([self.gcd_cooldown_millisecond / self.max_gcd_delay])
-        states.extend([self.combat_time_millisecond / self.target_time_millisecond])
+        gcd_state = [self.gcd_cooldown_millisecond / self.max_gcd_delay]
+        time_state = [self.combat_time_millisecond / self.target_time_millisecond]
 
-        return tf.reshape(tf.constant(states), [1, -1])
+        state_dict = {
+            "skill_states": skill_states,
+            "gcd_skill_states": gcd_skill_states,
+            "status_states": status_states,
+            "resource_states": resource_states,
+            "combo_states": combo_states,
+            "gcd_state": gcd_state,
+            "time_state": time_state,
+        } 
+
+        return {
+            k: tf.reshape(tf.constant(v), [1, -1]) for k, v in state_dict.items()
+        }

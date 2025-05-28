@@ -22,10 +22,6 @@ from .train_agents.ffxiv_ppo_agent import FFXIVPPOAgent
 from .create_ffxiv_environment import create_ffxiv_environment
 from .experience import Experience
 from .inference import inference 
-import warnings
-
-warnings.filterwarnings("ignore", message="Gradients do not exist for variables .*state_output/kernel:0.*")
-warnings.filterwarnings("ignore", message="Gradients do not exist for variables .*state_output/bias:0.*")
 
 CHECKPOINT_EPOCHS = 10
 
@@ -62,11 +58,6 @@ def parse_args():
     return parser.parse_args()
 
 COMBAT_START_TIME_MILLISECOND = -2000
-
-print("=== GPU 상태 확인 ===")
-print("TensorFlow 버전:", tf.__version__)
-print("GPU 사용 가능:", tf.config.list_physical_devices('GPU'))
-print("CUDA 빌드:", tf.test.is_built_with_cuda())
 
 def pretrain(
     class_name: str,
@@ -159,7 +150,7 @@ def pretrain(
                         if consecutive_rests > 500:
                             break
 
-            network.save(save_path)
+            network.save(f"{save_path}_{epoch}")
 
 
 if __name__ == "__main__":

@@ -26,30 +26,31 @@ from enum import Enum
 
 
 class NinjaSkills(Enum):
-    AEOLIAN_EDGE = 1
-    ARMOR_CRUSH = 2
-    BHAVACAKRA = 3
-    BUNSHIN = 4
-    DOKUMORI = 5
-    DREAM_WITHIN_A_DREAM = 6
-    FLEETING_RAIJU = 7
-    TCJ_FUMA_SHURIKEN = 8
-    GUST_SLASH = 9
-    HYOSHO_RANRYU = 10
-    KASSATSU = 11
-    KUNAIS_BANE = 12
-    MEDICATED = 13
-    MEISUI = 14
-    PHANTOM_KAMAITACHI = 15
-    RAITON = 16
-    TCJ_RAITON = 17
-    SPINNING_EDGE = 18
-    TCJ_SUITON = 19
-    SUITON = 20
-    TENCHIJIN = 21
-    TENRI_JINDO = 22
-    ZESHO_MEPPO = 23
-    FUMA_SHURIKEN = 24
+    BHAVACAKRA = 1
+    BUNSHIN = 2
+    DOKUMORI = 3
+    DREAM_WITHIN_A_DREAM = 4
+    KASSATSU = 5
+    KUNAIS_BANE = 6
+    MEDICATED = 7
+    MEISUI = 8
+    TENCHIJIN = 9
+    TENRI_JINDO = 10
+    ZESHO_MEPPO = 11
+    SPINNING_EDGE = 12
+    GUST_SLASH = 13
+    ARMOR_CRUSH = 14
+    AEOLIAN_EDGE = 15
+    FUMA_SHURIKEN = 16
+    RAITON = 17
+    SUITON = 18
+    HYOSHO_RANRYU = 19
+    FLEETING_RAIJU = 20
+    PHANTOM_KAMAITACHI = 21
+    TCJ_FUMA_SHURIKEN = 22
+    TCJ_RAITON = 23
+    TCJ_SUITON = 24
+
 
     @staticmethod
     def get_gcd_skills():
@@ -70,7 +71,6 @@ class NinjaSkills(Enum):
                 NinjaSkills.FUMA_SHURIKEN.value,
             ]
         )
-
 
 class NinjaBuffs(Enum):
     BUNSHIN_BUFF = 0
@@ -922,30 +922,30 @@ SHURIKEN = Resource(
 
 def create_ninja_environment(target_time_millisecond, start_time_millisecond):
     skills = [
-        AEOLIAN_EDGE,
-        ARMOR_CRUSH,
         BHAVACAKRA,
         BUNSHIN,
         DOKUMORI,
         DREAM_WITHIN_A_DREAM,
-        FLEETING_RAIJU,
-        TCJ_FUMA_SHURIKEN,
-        GUST_SLASH,
-        HYOSHO_RANRYU,
         KASSATSU,
         KUNAIS_BANE,
         MEDICATED,
         MEISUI,
-        PHANTOM_KAMAITACHI,
-        RAITON,
-        TCJ_RAITON,
-        SPINNING_EDGE,
-        TCJ_SUITON,
-        SUITON,
         TENCHIJIN,
         TENRI_JINDO,
         ZESHO_MEPPO,
+        SPINNING_EDGE,
+        GUST_SLASH,
+        ARMOR_CRUSH,
+        AEOLIAN_EDGE,
         FUMA_SHURIKEN,
+        RAITON,
+        SUITON,
+        HYOSHO_RANRYU,
+        FLEETING_RAIJU,
+        PHANTOM_KAMAITACHI,
+        TCJ_FUMA_SHURIKEN,
+        TCJ_RAITON,
+        TCJ_SUITON,
     ]
 
     assert len(skills) == len(
