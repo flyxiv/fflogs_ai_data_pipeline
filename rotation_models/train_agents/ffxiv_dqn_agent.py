@@ -85,16 +85,10 @@ class FFXIVDQNAgent:
         gcd_state_output_layer = keras.layers.Dense(1, name='state_output_gcd')
         ogcd_state_output_layer = keras.layers.Dense(1, name='state_output_ogcd')
 
-        if gcd_state == 0:
-            input_tensor = skill_states
-            target_network = gcd_dense_networks
-            advantage_output_layer = gcd_advantage_output_layer
-            state_output_layer = gcd_state_output_layer
-        else:
-            input_tensor = gcd_skill_states
-            target_network = ogcd_dense_networks
-            advantage_output_layer = ogcd_advantage_output_layer
-            state_output_layer = ogcd_state_output_layer
+        input_tensor = tf.cond(gcd_state == 0, lambda: skill_states, lambda: gcd_skill_states)
+        target_network = tf.cond(gcd_state == 0, lambda: gcd_dense_networks, lambda: ogcd_dense_networks)
+        advantage_output_layer = tf.cond(gcd_state == 0, lambda: gcd_advantage_output_layer, lambda: ogcd_advantage_output_layer)
+        state_output_layer = tf.cond(gcd_state == 0, lambda: gcd_state_output_layer, lambda: ogcd_state_output_layer)
 
         inp2 = target_network[0](input_tensor)
         for dense_network in target_network[1:]:
@@ -102,14 +96,8 @@ class FFXIVDQNAgent:
 
         advantage_output = advantage_output_layer(inp2)
 
-        if gcd_state != 0:
-            gcd_outputs = tf.reshape(tf.constant([0] * 13, dtype=tf.float32), (1, -1))
-            advantage_output = tf.concat([gcd_outputs, advantage_output], axis=1)
-
+        final_advantage_output = tf.cond(gcd_state == 0, lambda: advantage_output, lambda: tf.concat([tf.reshape(tf.constant([0] * 13, dtype=tf.float32), (1, -1)), advantage_output], axis=1))
         state_output = state_output_layer(inp2)
-
-        if gcd_state != 0:
-            state_output = tf.concat([gcd_outputs, state_output], axis=1)
 
         model = keras.Model(inputs=[skill_states, gcd_skill_states, status_states, resource_states, combo_states, gcd_state, time_state], outputs=[advantage_output, state_output])
 
