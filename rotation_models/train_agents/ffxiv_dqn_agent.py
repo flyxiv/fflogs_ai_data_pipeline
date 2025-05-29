@@ -84,21 +84,21 @@ class FFXIVDQNAgent:
         state_output_layer = keras.layers.Dense(1, name='state_output')
 
         # 12-15
-        zeros = tf.zeros([tf.shape(x)[0], 12]], dtype=tf.float32)
+        zeros = tf.zeros([tf.shape(x)[0], 12], dtype=tf.float32)
         zeros2 = tf.zeros([tf.shape(x)[0], 9], dtype=tf.float32)
-        gcd_state_layers = build_dense_network([64, 64, 32, 16, 4])
-        x2 = tf.concat([x2, gcd_state_input], axis=1)
+        gcd_state_layers = build_dense_network([64, 64, 32, 16, 4], prefix='gcd_state')
+
+        x2 = x 
         for layer in gcd_state_layers:
             x2 = layer(x2)
         
         gcd_combo_adv = tf.concat([zeros, x2, zeros2], axis=1)
 
-        adv = advantage_output_layer(x_gcd) + gcd_combo_adv
-        val = state_output_layer(x_gcd)
+        adv = advantage_output_layer(x) + gcd_combo_adv
+        val = state_output_layer(x)
 
-        all_inputs_list = [
+        model_inputs = [
             skill_states_input, 
-            gcd_skill_states_input, 
             status_states_input, 
             resource_states_input, 
             combo_states_input, 
@@ -106,7 +106,7 @@ class FFXIVDQNAgent:
             time_state_input
         ]
 
-        model = keras.Model(inputs=model_inputs, outputs=[final_advantage_output, final_state_output])
+        model = keras.Model(inputs=model_inputs, outputs=[adv, val])
         return model
 
     def get_action(self, state, valid_actions=None):
