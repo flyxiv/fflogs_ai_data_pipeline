@@ -152,8 +152,6 @@ class CombatStatus:
             assert skill is not None
             skill_states.extend(skill.get_state())
         
-        gcd_skill_states = skill_states[:14]
-
         status_states = []
         for buff in self.buffs:
             if buff:
@@ -188,7 +186,6 @@ class CombatStatus:
 
         state_dict = {
             "skill_states": skill_states,
-            "gcd_skill_states": gcd_skill_states,
             "status_states": status_states,
             "resource_states": resource_states,
             "combo_states": combo_states,

@@ -69,52 +69,41 @@ class FFXIVDQNAgent:
         # Override this network to use a different architecture.
 
         skill_states_input = keras.layers.Input(shape=(self.state_sizes['skill_states'],), name="skill_states")
-        gcd_skill_states_input = keras.layers.Input(shape=(self.state_sizes['gcd_skill_states'],), name="gcd_skill_states")
         status_states_input = keras.layers.Input(shape=(self.state_sizes['status_states'],), name="status_states")
         resource_states_input = keras.layers.Input(shape=(self.state_sizes['resource_states'],), name="resource_states")
         combo_states_input = keras.layers.Input(shape=(self.state_sizes['combo_states'],), name="combo_states")
         gcd_state_input = keras.layers.Input(shape=(self.state_sizes['gcd_state'],), name="gcd_state") # (None, 1) 또는 (None,) 형태의 int 또는 float
         time_state_input = keras.layers.Input(shape=(self.state_sizes['time_state'],), name="time_state")
 
-        gcd_dense_layers = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128, 64])
-        x_gcd = tf.concat([gcd_skill_states_input, status_states_input, resource_states_input, combo_states_input, gcd_state_input, time_state_input], axis=1)
-        for layer in gcd_dense_layers:
-            x_gcd = layer(x_gcd)
+        dense_layers = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128])
+        x = tf.concat([skill_states_input, status_states_input, resource_states_input, combo_states_input, gcd_state_input, time_state_input], axis=1)
+        for layer in dense_layers:
+            x = layer(x)
         
-        gcd_advantage_output_layer = keras.layers.Dense(self.action_size, name='advantage_output_gcd')
-        gcd_state_output_layer = keras.layers.Dense(1, name='state_output_gcd')
+        advantage_output_layer = keras.layers.Dense(self.action_size, name='advantage_output')
+        state_output_layer = keras.layers.Dense(1, name='state_output')
+
+        # 12-15
+        zeros = tf.zeros([tf.shape(x)[0], 12]], dtype=tf.float32)
+        zeros2 = tf.zeros([tf.shape(x)[0], 9], dtype=tf.float32)
+        gcd_state_layers = build_dense_network([64, 64, 32, 16, 4])
+        x2 = tf.concat([x2, gcd_state_input], axis=1)
+        for layer in gcd_state_layers:
+            x2 = layer(x2)
         
-        adv_gcd = gcd_advantage_output_layer(x_gcd)
-        val_gcd = gcd_state_output_layer(x_gcd)
+        gcd_combo_adv = tf.concat([zeros, x2, zeros2], axis=1)
 
-        ogcd_dense_layers = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128, 64])
-        x_ogcd = tf.concat([skill_states_input, status_states_input, resource_states_input, combo_states_input, gcd_state_input, time_state_input], axis=1)
-        for layer in ogcd_dense_layers:
-            x_ogcd = layer(x_ogcd)
+        adv = advantage_output_layer(x_gcd) + gcd_combo_adv
+        val = state_output_layer(x_gcd)
 
-        ogcd_advantage_output_layer = keras.layers.Dense(self.action_size - 13, name='advantage_output_ogcd')
-        ogcd_state_output_layer = keras.layers.Dense(1, name='state_output_ogcd')
-
-        adv_ogcd_partial = ogcd_advantage_output_layer(x_ogcd)
-        val_ogcd = ogcd_state_output_layer(x_ogcd)
-
-        padding_shape = [tf.shape(adv_ogcd_partial)[0], 13] # 배치 크기는 동적으로 가져옴
-        padding = tf.zeros(padding_shape, dtype=tf.float32)
-        adv_ogcd_padded = tf.concat([padding, adv_ogcd_partial], axis=1)
-
-        is_gcd_condition = tf.cast(tf.squeeze(tf.equal(gcd_state_input, 0), axis=-1), dtype=tf.bool) # (None,) bool 텐서
-
-        final_advantage_output = tf.where(is_gcd_condition[:, tf.newaxis], adv_gcd, adv_ogcd_padded)
-        final_state_output = tf.where(is_gcd_condition[:, tf.newaxis], val_gcd, val_ogcd)
-        
         all_inputs_list = [
             skill_states_input, 
             gcd_skill_states_input, 
-            status_states_input, # 사용하려면 모델 구조에 추가
-            resource_states_input, # 사용하려면 모델 구조에 추가
-            combo_states_input, # 사용하려면 모델 구조에 추가
+            status_states_input, 
+            resource_states_input, 
+            combo_states_input, 
             gcd_state_input, 
-            time_state_input # 사용하려면 모델 구조에 추가
+            time_state_input
         ]
 
         model = keras.Model(inputs=model_inputs, outputs=[final_advantage_output, final_state_output])
