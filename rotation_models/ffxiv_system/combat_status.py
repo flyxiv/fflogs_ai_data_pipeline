@@ -82,7 +82,7 @@ class CombatStatus:
 
         if self.combat_time_millisecond < 0:
             valids = np.zeros(len(self.skills) + 1)
-            valids[20] = 1
+            valids[18] = 1
             return valids
 
         return valid_skills
