@@ -89,7 +89,7 @@ class FFXIVDQNAgent:
         # 12-15
         zeros = tf.zeros([tf.shape(x)[0], 12], dtype=tf.float32)
         zeros2 = tf.zeros([tf.shape(x)[0], 9], dtype=tf.float32)
-        gcd_state_layers = build_dense_network([64, 64, 32, 16, 4], prefix='gcd_state')
+        gcd_state_layers = build_dense_network([64, 64, 32, 16, 4], prefix='gcd_state_')
 
         x2 = x 
         for layer in gcd_state_layers:
