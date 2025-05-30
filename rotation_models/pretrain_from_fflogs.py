@@ -23,6 +23,7 @@ from .create_ffxiv_environment import create_ffxiv_environment
 from .experience import Experience
 from .inference import inference 
 
+tf.get_logger().setLevel('ERROR')
 CHECKPOINT_EPOCHS = 10
 
 def parse_args():
@@ -102,7 +103,6 @@ def pretrain(
                 next_valid_actions = None
 
                 rotation_cnt = 0
-                network.save(f"{save_path}_{epoch}")
                 consecutive_rests = 0
 
                 while rotation_cnt < len(rotations):
@@ -166,7 +166,7 @@ def pretrain(
                         if consecutive_rests > 500:
                             break
 
-            network.save(f"{save_path}_{epoch}")
+            network.save(f"{save_path}/dqn_model_pretrain_{epoch}")
 
 
 if __name__ == "__main__":
