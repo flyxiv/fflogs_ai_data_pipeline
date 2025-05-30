@@ -102,6 +102,7 @@ def pretrain(
                 next_valid_actions = None
 
                 rotation_cnt = 0
+                network.save(f"{save_path}_{epoch}")
                 consecutive_rests = 0
 
                 while rotation_cnt < len(rotations):

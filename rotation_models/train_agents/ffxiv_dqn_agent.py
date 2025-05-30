@@ -52,7 +52,10 @@ class FFXIVDQNAgent:
         self.target_network_update_steps = 100
 
         # Model Initialization
-        self.duel_q_network = self._build_network()
+        if model_path:
+            self.duel_q_network = tf.keras.models.load_model(model_path)
+        else:
+            self.duel_q_network = self._build_network()
 
         if model_path:
             self.target_duel_q_network = tf.keras.models.load_model(model_path)

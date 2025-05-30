@@ -49,8 +49,7 @@ class CombatStatus:
         )
 
         state = self.get_state()
-        print(state)
-        self.state_sizes = {k: tf.shape(v)[1] for (k, v) in state.items()} 
+        self.state_sizes = {k: tf.shape(v)[1].numpy() for (k, v) in state.items()} 
         self.action_size = len(self.skills) + 1
 
     def reset(self):
