@@ -104,6 +104,7 @@ def pretrain(
 
                 rotation_cnt = 0
                 consecutive_rests = 0
+                rotation_total_loss = 0
 
                 while rotation_cnt < len(rotations):
                     if valid_actions[rotations[rotation_cnt]] == 1:
@@ -121,6 +122,7 @@ def pretrain(
                             assert answer.shape == action_outputs_percentage.shape, f"answer.shape: {answer.shape} != action_outputs_percentage.shape: {action_outputs_percentage.shape}"
 
                             loss = loss_function(answer, action_outputs_percentage)
+                            rotation_total_loss += loss
                             gradients = tape.gradient(loss, network.trainable_variables)
                             optimizer.apply_gradients(zip(gradients, network.trainable_variables))
 
@@ -165,8 +167,29 @@ def pretrain(
 
                         if consecutive_rests > 500:
                             break
+            
+            logging.info(f"rotation_average_loss: {rotation_total_loss / rotation_cnt}")
+            
+            if rotation_idx % 10 == 0:
+                network.save(f"{save_path}/dqn_model_pretrain.keras")
+                total_reward = inference(
+                    model_type=model_type,
+                    target_time_millisecond=target_time_millisecond,
+                    class_name=class_name,
+                    model_path=save_path,
+                    output_path=None
+                )
 
-            network.save(f"{save_path}/dqn_model_pretrain_{epoch}")
+        network.save(f"{save_path}/dqn_model_pretrain.keras")
+        total_reward = inference(
+            model_type=model_type,
+            target_time_millisecond=target_time_millisecond,
+            class_name=class_name,
+            model_path=save_path,
+            output_path=None
+        )
+
+
 
 
 if __name__ == "__main__":

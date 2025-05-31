@@ -128,7 +128,8 @@ def inference(
         "total_reward": [log.total_reward for log in action_log],
     }
 
-    pd.DataFrame(action_logs).to_csv(output_path, index=False)
+    if output_path:
+        pd.DataFrame(action_logs).to_csv(output_path, index=False)
 
     logging.info(f"total reward: {total_reward}")
     logging.info(f"saved rotation log to {output_path}")
