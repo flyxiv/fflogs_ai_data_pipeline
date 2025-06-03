@@ -74,7 +74,7 @@ def inference(
 
     if model_type == "dqn":
         agent = FFXIVDQNAgent(
-            state_size=ninja_environment.state_size,
+            state_sizes=ninja_environment.state_sizes,
             action_size=ninja_environment.action_size,
             model_path=model_path,
         )
@@ -97,9 +97,6 @@ def inference(
     total_reward = 0
 
     while not done:
-        logging.info(
-            f"progress: {current_time_millisecond / target_time_millisecond * 100}%"
-        )
         action_id = agent.get_action(state, valid_actions)
 
         next_state, next_valid_actions, current_time_millisecond, reward, done = (

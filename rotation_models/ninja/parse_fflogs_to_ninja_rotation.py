@@ -34,10 +34,18 @@ class NinjaFflogsRotation:
 
                 events = fight['events']
                 ninja_casts = [
-                    NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS[event['abilityGameID']] for event in events if event['type'] == 'cast' and event['sourceID'] == ninja_player_id and event['abilityGameID'] in NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS
+                    (NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS[event['abilityGameID']], event['timestamp']) for event in events if event['type'] == 'cast' and event['sourceID'] == ninja_player_id and event['abilityGameID'] in NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS
                 ]
 
-                self.ninja_dataset.append(ninja_casts)
+                start_time = ninja_casts[0][1] + 1000
+                end_time = ninja_casts[-1][1]
+
+                if end_time - start_time <= 1000:
+                    continue
+
+                ninja_casts = [l[0] for l in ninja_casts]
+
+                self.ninja_dataset.append((ninja_casts, end_time - start_time))
 
 
     def __repr__(self):

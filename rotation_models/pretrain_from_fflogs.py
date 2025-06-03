@@ -95,8 +95,11 @@ def pretrain(
 
         for epoch in range(num_epochs):
 
-            for rotation_idx, rotations in tqdm(enumerate(fflogs_rotation.ninja_dataset)):
+            for rotation_idx, (rotations, target_time_millisecond) in tqdm(enumerate(fflogs_rotation.ninja_dataset)):
                 environment.reset()
+                environment.target_time_millisecond = target_time_millisecond
+
+                logging.info(f"target_time: {environment.target_time_millisecond}")
                 valid_actions = environment.get_valid_skills()
                 state = environment.get_state()
                 current_time_millisecond = environment.combat_time_millisecond 
@@ -168,24 +171,25 @@ def pretrain(
                         if consecutive_rests > 500:
                             break
             
-            logging.info(f"rotation_average_loss: {rotation_total_loss / rotation_cnt}")
-            
-            if rotation_idx % 10 == 0:
-                network.save(f"{save_path}/dqn_model_pretrain.keras")
-                total_reward = inference(
-                    model_type=model_type,
-                    target_time_millisecond=target_time_millisecond,
-                    class_name=class_name,
-                    model_path=save_path,
-                    output_path=None
-                )
+                if rotation_cnt > 0:
+                    logging.info(f"rotation_average_loss: {rotation_total_loss / rotation_cnt}")
+                
+                if rotation_idx % 10 == 0:
+                    network.save(f"{save_path}/dqn_model_pretrain.keras")
+                    total_reward = inference(
+                        model_type=model_type,
+                        target_time_millisecond=390000,
+                        class_name=class_name,
+                        model_path=f"{save_path}/dqn_model_pretrain.keras",
+                        output_path=None
+                    )
 
         network.save(f"{save_path}/dqn_model_pretrain.keras")
         total_reward = inference(
             model_type=model_type,
-            target_time_millisecond=target_time_millisecond,
+            target_time_millisecond=390000,
             class_name=class_name,
-            model_path=save_path,
+            model_path=f"{save_path}/dqn_model_pretrain.keras",
             output_path=None
         )
 

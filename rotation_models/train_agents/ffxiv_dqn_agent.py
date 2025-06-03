@@ -119,11 +119,8 @@ class FFXIVDQNAgent:
             state: current state. Last element of the state must be is_gcd(1 if GCD turn, 0 if oGCD turn)
             valid_actions: tensor with 1 for index of valid actions, 0 for invalid actions
         """
-        assert state.shape[1] == self.state_size, f"State size: {state.shape[1]} is not equal to state size: {self.state_size}"
-
         if np.random.rand() <= self.epsilon:
-            state = tf.squeeze(state, axis=0)
-            return self._randomly_select_actions(state, valid_actions)
+            return self._randomly_select_actions(valid_actions)
         
         advantages, _ = self.duel_q_network(state)
 
@@ -133,7 +130,7 @@ class FFXIVDQNAgent:
 
         return np.argmax(advantages_masked)
 
-    def _randomly_select_actions(self, state, valid_actions):
+    def _randomly_select_actions(self, valid_actions):
         valid_actions_indices = np.where(valid_actions == 1)[0]
         logging.debug(f"valid_actions: {valid_actions}")
         logging.debug(f"valid_actions_indices: {valid_actions_indices}")
