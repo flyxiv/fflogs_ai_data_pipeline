@@ -101,7 +101,7 @@ def inference(
         )
         total_reward += int(reward * MAX_POTENCY)
 
-        inference_logger.log(action_outputs, state_output, ninja_environment, valid_actions, total_reward)
+        inference_logger.log(action_id, action_outputs, state_output, ninja_environment, valid_actions, total_reward)
 
         if done:
             break

@@ -131,7 +131,7 @@ class FFXIVDQNAgent:
         assert np.min(advantages) >= IMPOSSIBLE_PENALTY, f"Invalid action value: {np.min(advantages)}"
 
         if debug:
-            return np.argmax(advantages), state_output, state 
+            return np.argmax(advantages), advantages, state_output 
 
         return np.argmax(advantages)
 
