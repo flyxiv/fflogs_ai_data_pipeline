@@ -19,13 +19,7 @@ from .create_ffxiv_environment import create_ffxiv_environment
 from .experience import Experience
 from .ninja.ninja_combat_data import NinjaSkills
 from .const import MAX_POTENCY
-
-@dataclass
-class InferenceLog:
-    action_name: str
-    cast_time_millisecond: int
-    total_reward: int
-
+from .inference_logger import InferenceLogger
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -71,6 +65,7 @@ def inference(
     output_path: str,
 ):
     ninja_environment = create_ffxiv_environment(class_name, target_time_millisecond, -2000)
+    inference_logger = InferenceLogger(output_path)
 
     if model_type == "dqn":
         agent = FFXIVDQNAgent(
@@ -99,21 +94,14 @@ def inference(
     total_reward = 0
 
     while not done:
-        action_id = agent.get_action(state, valid_actions)
+        action_id, action_outputs, state_output = agent.get_action(state, valid_actions, debug=True)
 
         next_state, next_valid_actions, current_time_millisecond, reward, done = (
             ninja_environment.use_skill(action_id)
         )
         total_reward += int(reward * MAX_POTENCY)
 
-        if action_id > 0:
-            action_log.append(
-                InferenceLog(
-                    action_name=NinjaSkills(action_id).name,
-                    cast_time_millisecond=current_time_millisecond,
-                    total_reward=total_reward,
-                )
-            )
+        inference_logger.log(action_outputs, state_output, ninja_environment, valid_actions, total_reward)
 
         if done:
             break
@@ -121,14 +109,8 @@ def inference(
         valid_actions = next_valid_actions
         state = next_state
 
-    action_logs = {
-        "action_name": [log.action_name for log in action_log],
-        "cast_time_millisecond": [log.cast_time_millisecond for log in action_log],
-        "total_reward": [log.total_reward for log in action_log],
-    }
-
     if output_path:
-        pd.DataFrame(action_logs).to_csv(output_path, index=False)
+        inference_logger.save()
 
     logging.info(f"total reward: {total_reward}")
     logging.info(f"saved rotation log to {output_path}")

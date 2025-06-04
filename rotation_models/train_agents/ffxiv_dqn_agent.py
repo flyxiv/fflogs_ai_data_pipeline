@@ -117,7 +117,7 @@ class FFXIVDQNAgent:
         model = keras.Model(inputs=[model_inputs, valid_action_mask_inp], outputs=[action_distribution_masked, val])
         return model
 
-    def get_action(self, state, valid_actions=None):
+    def get_action(self, state, valid_actions=None, debug=False):
         """ Select next action 
 
         Args:
@@ -127,13 +127,13 @@ class FFXIVDQNAgent:
         if np.random.rand() <= self.epsilon:
             return self._randomly_select_actions(valid_actions)
         
-        advantages, _ = self.duel_q_network([state, valid_actions])
+        advantages, state_output = self.duel_q_network([state, valid_actions])
+        assert np.min(advantages) >= IMPOSSIBLE_PENALTY, f"Invalid action value: {np.min(advantages)}"
 
-        invalid_mask = 1.0 - np.array(valid_actions, dtype=np.float32)
-        advantages_masked = np.where(valid_actions == 1, advantages, IMPOSSIBLE_PENALTY)
-        assert np.min(advantages_masked) >= IMPOSSIBLE_PENALTY, f"Invalid action value: {np.min(advantages_masked)}"
+        if debug:
+            return np.argmax(advantages), state_output, state 
 
-        return np.argmax(advantages_masked)
+        return np.argmax(advantages)
 
     def _randomly_select_actions(self, valid_actions):
         valid_actions_indices = np.where(valid_actions == 1)[0]

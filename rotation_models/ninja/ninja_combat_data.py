@@ -51,27 +51,6 @@ class NinjaSkills(Enum):
     TCJ_RAITON = 23
     TCJ_SUITON = 24
 
-
-    @staticmethod
-    def get_gcd_skills():
-        return set(
-            [
-                NinjaSkills.TCJ_FUMA_SHURIKEN.value,
-                NinjaSkills.TCJ_RAITON.value,
-                NinjaSkills.TCJ_SUITON.value,
-                NinjaSkills.SUITON.value,
-                NinjaSkills.RAITON.value,
-                NinjaSkills.SPINNING_EDGE.value,
-                NinjaSkills.ARMOR_CRUSH.value,
-                NinjaSkills.AEOLIAN_EDGE.value,
-                NinjaSkills.HYOSHO_RANRYU.value,
-                NinjaSkills.FLEETING_RAIJU.value,
-                NinjaSkills.GUST_SLASH.value,
-                NinjaSkills.PHANTOM_KAMAITACHI.value,
-                NinjaSkills.FUMA_SHURIKEN.value,
-            ]
-        )
-
 class NinjaBuffs(Enum):
     BUNSHIN_BUFF = 0
     HIGI_BUFF = 1

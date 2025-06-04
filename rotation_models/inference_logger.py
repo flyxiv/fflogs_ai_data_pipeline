@@ -1,0 +1,40 @@
+import tensorflow as tf
+import json
+
+from rotation_models.ffxiv_system.combat_status import CombatStatus
+from rotation_models.ninja.ninja_combat_data import NinjaSkills, NinjaStatus, NinjaResources
+
+class InferenceLogger:
+    """Keeps track of model's state at each inference and saves the final result as a csv file
+    """
+
+    def __init__(self, output_path: str):
+        self.output_path = output_path
+        self.logs = []
+
+    def log(self, action_output, state_output, ninja_state, valid_actions, total_reward):
+        self.logs.append({
+            "action_output": self._to_readable_action_output(action_output),
+            "state_output": self._to_readable_state_output(state_output),
+            "ninja_state": self._to_readable_ninja_state(ninja_state),
+            "valid_actions": valid_actions,
+            "total_reward": total_reward,
+        })
+
+    def _to_readable_action_output(self, action_output: tf.Tensor):
+        action_list = tf.reshape(action_output, (-1)).numpy().tolist()
+        return [NinjaSkills(action).name for action in action_list if action in NinjaSkills else "Hold"]
+
+    def _to_readable_ninja_state(self, ninja_state: CombatStatus):
+        return {
+            "combo": ninja_state.combo,
+            "combo_duration_millisecond": ninja_state.combo_duration_millisecond,
+            "gcd_cooldown_millisecond": ninja_state.gcd_cooldown_millisecond,
+            "start_time_millisecond": ninja_state.start_time_millisecond,
+            "combat_time_millisecond": ninja_state.combat_time_millisecond,
+            "target_time_millisecond": ninja_state.target_time_millisecond,
+        }
+
+    def save(self):
+        with open(self.output_path, "w") as f:
+            json.dump(self.logs, f)
