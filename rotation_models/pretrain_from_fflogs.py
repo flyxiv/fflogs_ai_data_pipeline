@@ -67,6 +67,8 @@ def pretrain(
     save_path: str,
     log_dir: str,
 ):
+    model_path = None# f"{save_path}/dqn_model_pretrain.keras"
+
     with tf.device('/GPU:0'):
         environment = create_ffxiv_environment(class_name, 10000, COMBAT_START_TIME_MILLISECOND)
         if model_type == "dqn":
@@ -74,6 +76,7 @@ def pretrain(
                 state_sizes=environment.state_sizes,
                 action_size=environment.action_size,
                 replay_period=10,
+                model_path=model_path
             ).duel_q_network
         elif model_type == "ppo":
             network = FFXIVPPOAgent(
@@ -84,7 +87,7 @@ def pretrain(
         else:
             raise ValueError(f"Invalid model type: {model_type}")
 
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
         fflogs_rotation = NinjaFflogsRotation(log_dir)
 
@@ -114,12 +117,7 @@ def pretrain(
                         consecutive_rests = 0
 
                         with tf.GradientTape() as tape:
-                            if model_type == "dqn":
-                                action_outputs, _ = network(state)
-                                action_outputs_percentage = tf.nn.softmax(action_outputs)
-                            elif model_type == "ppo":
-                                action_outputs, _ = network([state, tf.reshape(valid_actions, [1, -1])])
-                                action_outputs_percentage = tf.nn.softmax(action_outputs)
+                            action_outputs_percentage, _ = network([state, tf.reshape(valid_actions, [1, -1])])
 
                             answer = tf.reshape(tf.one_hot(rotations[rotation_cnt], action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
                             assert answer.shape == action_outputs_percentage.shape, f"answer.shape: {answer.shape} != action_outputs_percentage.shape: {action_outputs_percentage.shape}"
@@ -148,15 +146,10 @@ def pretrain(
                             logging.debug(NinjaSkills(rotations[rotation_cnt]).name)
                     else:
                         with tf.GradientTape() as tape:
-                            if model_type == "dqn":
-                                action_outputs, _ = network(state)
-                                action_outputs_percentage = tf.nn.softmax(action_outputs)
-                            elif model_type == "ppo":
-                                action_outputs, _ = network([state, tf.reshape(valid_actions, [1, -1])])
-                                action_outputs_percentage = tf.nn.softmax(action_outputs)
+                            action_outputs_percentage, _ = network([state, tf.reshape(valid_actions, [1, -1])])
 
-                            answer = tf.reshape(tf.one_hot(rotations[rotation_cnt], action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
-                            loss = loss_function(answer, action_outputs_percentage)
+                            answer = tf.reshape(tf.one_hot(0, action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
+                            loss = loss_function(answer, action_outputs_percentage) 
                             gradients = tape.gradient(loss, network.trainable_variables)
 
                             if consecutive_rests < 22:
@@ -181,7 +174,7 @@ def pretrain(
                         target_time_millisecond=390000,
                         class_name=class_name,
                         model_path=f"{save_path}/dqn_model_pretrain.keras",
-                        output_path=None
+                        output_path=f"{save_path}/rotation.csv"
                     )
 
         network.save(f"{save_path}/dqn_model_pretrain.keras")

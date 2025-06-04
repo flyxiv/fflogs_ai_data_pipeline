@@ -78,6 +78,8 @@ def inference(
             action_size=ninja_environment.action_size,
             model_path=model_path,
         )
+        logging.info(agent.epsilon)
+        agent.epsilon = 0
     elif model_type == "ppo":
         agent = FFXIVPPOAgent(
             state_size=ninja_environment.state_size,

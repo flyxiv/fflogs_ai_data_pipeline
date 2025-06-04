@@ -77,6 +77,7 @@ class FFXIVDQNAgent:
         combo_states_input = keras.layers.Input(shape=(self.state_sizes['combo_states'],), name="combo_states")
         gcd_state_input = keras.layers.Input(shape=(self.state_sizes['gcd_state'],), name="gcd_state") # (None, 1) 또는 (None,) 형태의 int 또는 float
         time_state_input = keras.layers.Input(shape=(self.state_sizes['time_state'],), name="time_state")
+        valid_action_mask_inp = keras.Input(shape=(self.action_size,))
 
         dense_layers = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128])
         x = tf.concat([skill_states_input, status_states_input, resource_states_input, combo_states_input, gcd_state_input, time_state_input], axis=1)
@@ -84,6 +85,7 @@ class FFXIVDQNAgent:
             x = layer(x)
         
         advantage_output_layer = keras.layers.Dense(self.action_size, name='advantage_output')
+
         state_output_layer = keras.layers.Dense(1, name='state_output')
 
         # 12-15
@@ -98,6 +100,9 @@ class FFXIVDQNAgent:
         gcd_combo_adv = tf.concat([zeros, x2, zeros2], axis=1)
 
         adv = advantage_output_layer(x) + gcd_combo_adv
+
+        penalty_adder = (1.0 - valid_action_mask_inp) * IMPOSSIBLE_PENALTY
+        action_distribution_masked = keras.layers.Softmax()(adv + penalty_adder)
         val = state_output_layer(x)
 
         model_inputs = [
@@ -109,7 +114,7 @@ class FFXIVDQNAgent:
             time_state_input
         ]
 
-        model = keras.Model(inputs=model_inputs, outputs=[adv, val])
+        model = keras.Model(inputs=[model_inputs, valid_action_mask_inp], outputs=[action_distribution_masked, val])
         return model
 
     def get_action(self, state, valid_actions=None):
@@ -122,7 +127,7 @@ class FFXIVDQNAgent:
         if np.random.rand() <= self.epsilon:
             return self._randomly_select_actions(valid_actions)
         
-        advantages, _ = self.duel_q_network(state)
+        advantages, _ = self.duel_q_network([state, valid_actions])
 
         invalid_mask = 1.0 - np.array(valid_actions, dtype=np.float32)
         advantages_masked = np.where(valid_actions == 1, advantages, IMPOSSIBLE_PENALTY)
