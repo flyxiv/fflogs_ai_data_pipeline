@@ -165,7 +165,7 @@ class FFXIVDQNAgent:
         return r_t + self.gamma * max_action_q - q_t_1[memory_experience.action_id]
 
     def _calculate_q_value(self, state, valid_actions, is_target=False):
-        advantages, states_value = self.duel_q_network(state) if not is_target else self.target_duel_q_network(state)
+        advantages, states_value = self.duel_q_network([state, valid_actions]) if not is_target else self.target_duel_q_network([state, valid_actions])
 
         advantages = tf.squeeze(advantages, axis=0)
         states_value = tf.squeeze(states_value, axis=0)
