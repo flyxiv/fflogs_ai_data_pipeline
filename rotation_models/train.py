@@ -40,6 +40,9 @@ def parse_args():
         "--save-path", type=str, required=True, help="path to save the model"
     )
     parser.add_argument(
+        "--pretrained-path", type=str, required=False, default=None, help="path to fflogs pretrained model"
+    )
+    parser.add_argument(
         "--class-name",
         type=str,
         required=False,
@@ -76,18 +79,20 @@ COMBAT_START_TIME_MILLISECOND = -2000
 def train_dqn(
     target_time_millisecond: int,
     class_name: str,
+    pretrained_path: str,
     num_episodes=100,
     replay_period=32,
     save_path="ninja_model_dqn.keras",
 ):
     environment = create_ffxiv_environment(class_name, target_time_millisecond, start_time_millisecond=COMBAT_START_TIME_MILLISECOND)
     agent = FFXIVDQNAgent(
-        state_size=environment.state_size,
+        state_sizes=environment.state_sizes,
         action_size=environment.action_size,
         replay_period=replay_period,
+        model_path=pretrained_path
     )
 
-    agent.duel_q_network.load_weights('./trained_models/ninja_model_dqn_pretrained.keras')
+    agent.duel_q_network.load_weights(f'{pretrained_path}/dqn_model_pretrained.keras')
     agent._update_target_network()
 
     num_actions = 0
@@ -280,6 +285,7 @@ if __name__ == "__main__":
         train_dqn(
             args.target_time_millisecond,
             args.class_name,
+            args.pretrained_path,
             args.num_episodes,
             args.replay_period,
             args.save_path,

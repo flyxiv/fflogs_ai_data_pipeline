@@ -131,7 +131,7 @@ class FFXIVDQNAgent:
         assert np.min(advantages) >= IMPOSSIBLE_PENALTY, f"Invalid action value: {np.min(advantages)}"
 
         if debug:
-            return np.argmax(advantages), state_output, state 
+            return np.argmax(advantages), advantages, state_output 
 
         return np.argmax(advantages)
 
@@ -157,6 +157,7 @@ class FFXIVDQNAgent:
         if memory_experience.done:
             return r_t - q_t_1_selected_action
 
+<<<<<<< HEAD
         q_target_t = self._calculate_q_value(memory_experience.next_state, is_target=True)
         q_target_max = tf.reduce_max(q_target_t)
 
@@ -164,6 +165,10 @@ class FFXIVDQNAgent:
 
     def _calculate_q_value(self, state, is_target=False):
         advantages, states_value = self.duel_q_network(state) if not is_target else self.target_duel_q_network(state)
+=======
+    def _calculate_q_value(self, state, valid_actions, is_target=False):
+        advantages, states_value = self.duel_q_network([state, valid_actions]) if not is_target else self.target_duel_q_network([state, valid_actions])
+>>>>>>> 100c1acba0cfc127b9f8f6a20ff297f0c5c4eb59
 
         advantages = tf.squeeze(advantages, axis=0)
         states_value = tf.squeeze(states_value, axis=0)

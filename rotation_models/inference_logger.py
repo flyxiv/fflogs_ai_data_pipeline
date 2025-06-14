@@ -2,7 +2,7 @@ import tensorflow as tf
 import json
 
 from rotation_models.ffxiv_system.combat_status import CombatStatus
-from rotation_models.ninja.ninja_combat_data import NinjaSkills, NinjaStatus, NinjaResources
+from rotation_models.ninja.ninja_combat_data import NinjaSkills, NinjaBuffs, NinjaDebuffs, NinjaResources
 
 class InferenceLogger:
     """Keeps track of model's state at each inference and saves the final result as a csv file
@@ -12,18 +12,25 @@ class InferenceLogger:
         self.output_path = output_path
         self.logs = []
 
-    def log(self, action_output, state_output, ninja_state, valid_actions, total_reward):
+    def log(self, action_id, action_output, state_output, ninja_state, valid_actions, total_reward):
         self.logs.append({
+            "selected_action": str(NinjaSkills(action_id).name) if action_id > 0 else "Hold",
             "action_output": self._to_readable_action_output(action_output),
-            "state_output": self._to_readable_state_output(state_output),
             "ninja_state": self._to_readable_ninja_state(ninja_state),
-            "valid_actions": valid_actions,
+            "valid_actions": valid_actions.tolist(),
             "total_reward": total_reward,
         })
 
     def _to_readable_action_output(self, action_output: tf.Tensor):
         action_list = tf.reshape(action_output, (-1)).numpy().tolist()
-        return [NinjaSkills(action).name for action in action_list if action in NinjaSkills else "Hold"]
+
+        action_outputs = dict() 
+
+        for i, action in enumerate(action_list):
+            skill_name = str(NinjaSkills(i).name) if i > 0 else "Hold"
+            action_outputs[skill_name] = float(action)
+
+        return action_outputs
 
     def _to_readable_ninja_state(self, ninja_state: CombatStatus):
         return {
@@ -33,6 +40,7 @@ class InferenceLogger:
             "start_time_millisecond": ninja_state.start_time_millisecond,
             "combat_time_millisecond": ninja_state.combat_time_millisecond,
             "target_time_millisecond": ninja_state.target_time_millisecond,
+<<<<<<< HEAD
             "resources": self._to_readable_resources(ninja_state.resources),
             "cooldowns": self._to_readable_cooldowns(ninja_state.cooldowns),
         }
@@ -49,6 +57,11 @@ class InferenceLogger:
     def _to_readable_cooldowns(self, cooldowns: List[int]):
         return {
             NinjaSkills(i).name: cooldowns[i] for i in range(len(NinjaSkills))
+=======
+            "skill_cooldowns": {
+                NinjaSkills(i + 1).name: skill.current_cooldown_millisecond for (i, skill) in enumerate(ninja_state.skills) 
+            }
+>>>>>>> 100c1acba0cfc127b9f8f6a20ff297f0c5c4eb59
         }
 
     def save(self):

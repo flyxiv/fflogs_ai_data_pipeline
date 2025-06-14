@@ -33,14 +33,31 @@ class NinjaFflogsRotation:
                     continue
 
                 events = fight['events']
-                ninja_casts = [
-                    (NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS[event['abilityGameID']], event['timestamp']) for event in events if event['type'] == 'cast' and event['sourceID'] == ninja_player_id and event['abilityGameID'] in NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS
-                ]
+
+                ninja_casts = list() 
+
+                for i, event in enumerate(events):
+                    if not (event['type'] == 'cast' and event['sourceID'] == ninja_player_id and event['abilityGameID'] in NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS):
+                        continue
+
+                    if i == 0:
+                        prev_combat_time = event['timestamp']
+
+                    current_combat_time = event['timestamp']
+
+                    if i > 0 and current_combat_time - prev_combat_time > 8000:
+                        break
+
+                    ninja_casts.append((NINJA_FFLOG_SKILL_IDS_TO_MODEL_SKILL_IDS[event['abilityGameID']], event['timestamp'])) 
+                    prev_combat_time = current_combat_time
+
+                if not ninja_casts:
+                    continue
 
                 start_time = ninja_casts[0][1] + 1000
                 end_time = ninja_casts[-1][1]
 
-                if end_time - start_time <= 1000:
+                if end_time - start_time <= 10000:
                     continue
 
                 ninja_casts = [l[0] for l in ninja_casts]

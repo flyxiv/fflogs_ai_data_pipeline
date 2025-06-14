@@ -11,6 +11,7 @@ $ python -m rotation_models.pretrain_from_fflogs --save-path ./trained_models/ni
 import argparse
 import logging
 import pandas as pd
+from pathlib import Path
 from tqdm import tqdm
 import os
 import tensorflow as tf
@@ -94,7 +95,9 @@ def pretrain(
         num_actions = 0
 
         loss_function = tf.keras.losses.CategoricalCrossentropy()
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+        save_path = Path(save_path) / 'pretrain'
+        os.makedirs(save_path, exist_ok=True)
 
         for epoch in range(num_epochs):
 
@@ -145,15 +148,16 @@ def pretrain(
                             logging.debug(f"NINKI: {environment.resources[NinjaResources.NINKI.value].current_stacks}")
                             logging.debug(NinjaSkills(rotations[rotation_cnt]).name)
                     else:
-                        with tf.GradientTape() as tape:
-                            action_outputs_percentage, _ = network([state, tf.reshape(valid_actions, [1, -1])])
+                        if sum(valid_actions) > 1:
+                            with tf.GradientTape() as tape:
+                                action_outputs_percentage, _ = network([state, tf.reshape(valid_actions, [1, -1])])
 
-                            answer = tf.reshape(tf.one_hot(0, action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
-                            loss = loss_function(answer, action_outputs_percentage) 
-                            gradients = tape.gradient(loss, network.trainable_variables)
+                                answer = tf.reshape(tf.one_hot(0, action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
+                                loss = loss_function(answer, action_outputs_percentage) / 5 
+                                gradients = tape.gradient(loss, network.trainable_variables)
 
-                            if consecutive_rests < 22:
-                                optimizer.apply_gradients(zip(gradients, network.trainable_variables))
+                                if consecutive_rests < 15:
+                                    optimizer.apply_gradients(zip(gradients, network.trainable_variables))
 
                         next_state, next_valid_actions, current_time_millisecond, _, _ = environment.use_skill(0)
                         valid_actions = next_valid_actions
@@ -174,7 +178,7 @@ def pretrain(
                         target_time_millisecond=390000,
                         class_name=class_name,
                         model_path=f"{save_path}/dqn_model_pretrain.keras",
-                        output_path=f"{save_path}/rotation.csv"
+                        output_path=f"{save_path}/rotation_{rotation_idx}.csv"
                     )
 
         network.save(f"{save_path}/dqn_model_pretrain.keras")
