@@ -150,29 +150,26 @@ class FFXIVDQNAgent:
         """
         r_t = memory_experience.reward
 
-        if memory_experience.done:
-            return r_t
-
-        q_t = self._calculate_q_value(memory_experience.next_state, memory_experience.next_valid_actions)
-        max_q_action_idx = np.argmax(q_t)
-
-        q_target_t = self._calculate_q_value(memory_experience.next_state, memory_experience.next_valid_actions, is_target=True)
-        max_action_q = q_target_t[max_q_action_idx] 
-
         # t_1 = t - 1
-        q_t_1 = self._calculate_q_value(memory_experience.state, memory_experience.valid_actions)
+        q_t_1 = self._calculate_q_value(memory_experience.state)
+        q_t_1_selected_action = q_t_1[memory_experience.action_id]
 
-        return r_t + self.gamma * max_action_q - q_t_1[memory_experience.action_id]
+        if memory_experience.done:
+            return r_t - q_t_1_selected_action
 
-    def _calculate_q_value(self, state, valid_actions, is_target=False):
+        q_target_t = self._calculate_q_value(memory_experience.next_state, is_target=True)
+        q_target_max = tf.reduce_max(q_target_t)
+
+        return r_t + self.gamma * q_target_max - q_t_1_selected_action
+
+    def _calculate_q_value(self, state, is_target=False):
         advantages, states_value = self.duel_q_network(state) if not is_target else self.target_duel_q_network(state)
 
         advantages = tf.squeeze(advantages, axis=0)
         states_value = tf.squeeze(states_value, axis=0)
 
-        advantages_masked = tf.where(valid_actions == 1, advantages, IMPOSSIBLE_PENALTY)
-        mean_advantages = tf.reduce_mean(tf.boolean_mask(advantages_masked, valid_actions == 1))
-        return states_value + (advantages_masked - mean_advantages)
+        mean_advantages = tf.reduce_mean(advantages)
+        return states_value + (advantages - mean_advantages)
 
     def insert_to_memory(self, experience: Experience):
         # Give current max priority to new experience
@@ -191,6 +188,8 @@ class FFXIVDQNAgent:
         loss = 0
 
         sampled_batches = []
+
+        train_history = []
 
         with tf.GradientTape() as tape:
             for j in range(self.batch_size):
@@ -219,13 +218,16 @@ class FFXIVDQNAgent:
                 new_p = (abs(td_error_j) + EPSILON_P) ** self.alpha
                 assert new_p > 0, f"new_p: {new_p} is not greater than 0"
 
-                self.memory.update(idx, new_p)
+                train_history.append((idx, new_p))
 
                 loss += w_j * (td_error_j ** 2) / self.batch_size
 
         logging.info(f"loss: {loss}")
         grads = tape.gradient(loss, self.duel_q_network.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.duel_q_network.trainable_variables))
+
+        for idx, new_p in train_history:
+            self.memory.update(idx, new_p)
 
         self.steps += 1
 

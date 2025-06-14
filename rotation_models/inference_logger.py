@@ -33,6 +33,22 @@ class InferenceLogger:
             "start_time_millisecond": ninja_state.start_time_millisecond,
             "combat_time_millisecond": ninja_state.combat_time_millisecond,
             "target_time_millisecond": ninja_state.target_time_millisecond,
+            "resources": self._to_readable_resources(ninja_state.resources),
+            "cooldowns": self._to_readable_cooldowns(ninja_state.cooldowns),
+        }
+
+    def _to_readable_resources(self, resources: List[int]):
+        return {
+            "ninki": resources[NinjaResources.NINKI.value],
+            "shuriken": resources[NinjaResources.SHURIKEN.value],
+            "tcj_fuma": resources[NinjaResources.TCJ_FUMA.value],
+            "tcj_raiton": resources[NinjaResources.TCJ_RAITON.value],
+            "tcj_suiton": resources[NinjaResources.TCJ_SUITON.value],
+        }
+
+    def _to_readable_cooldowns(self, cooldowns: List[int]):
+        return {
+            NinjaSkills(i).name: cooldowns[i] for i in range(len(NinjaSkills))
         }
 
     def save(self):
