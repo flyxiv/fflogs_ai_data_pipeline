@@ -1,5 +1,6 @@
 import tensorflow as tf
 import json
+from typing import List
 
 from rotation_models.ffxiv_system.combat_status import CombatStatus
 from rotation_models.ninja.ninja_combat_data import NinjaSkills, NinjaBuffs, NinjaDebuffs, NinjaResources
