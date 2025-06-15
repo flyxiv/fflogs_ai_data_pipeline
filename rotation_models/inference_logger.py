@@ -40,7 +40,6 @@ class InferenceLogger:
             "start_time_millisecond": ninja_state.start_time_millisecond,
             "combat_time_millisecond": ninja_state.combat_time_millisecond,
             "target_time_millisecond": ninja_state.target_time_millisecond,
-<<<<<<< HEAD
             "resources": self._to_readable_resources(ninja_state.resources),
             "cooldowns": self._to_readable_cooldowns(ninja_state.cooldowns),
         }
@@ -57,11 +56,6 @@ class InferenceLogger:
     def _to_readable_cooldowns(self, cooldowns: List[int]):
         return {
             NinjaSkills(i).name: cooldowns[i] for i in range(len(NinjaSkills))
-=======
-            "skill_cooldowns": {
-                NinjaSkills(i + 1).name: skill.current_cooldown_millisecond for (i, skill) in enumerate(ninja_state.skills) 
-            }
->>>>>>> 100c1acba0cfc127b9f8f6a20ff297f0c5c4eb59
         }
 
     def save(self):

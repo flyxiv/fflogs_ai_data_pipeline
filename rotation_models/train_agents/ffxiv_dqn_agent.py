@@ -122,8 +122,8 @@ class FFXIVDQNAgent:
         if np.random.rand() <= self.epsilon:
             return self._randomly_select_actions(valid_actions)
         
-        advantages, state_output = self.duel_q_network([state, valid_actions])
-        assert np.min(advantages) >= IMPOSSIBLE_PENALTY, f"Invalid action value: {np.min(advantages)}"
+        advantages, state_output = self.duel_q_network(state)
+        advantages = tf.where(valid_actions == 1, advantages, IMPOSSIBLE_PENALTY)
 
         if debug:
             return np.argmax(advantages), state_output, state 
