@@ -70,7 +70,7 @@ def inference(
     if model_type == "dqn":
         agent = FFXIVDQNAgent(
             state_sizes=ninja_environment.state_sizes,
-            action_size=ninja_environment.action_size,
+            action_sizes=ninja_environment.action_sizes,
             model_path=model_path,
         )
         logging.info(agent.epsilon)
