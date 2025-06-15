@@ -75,7 +75,6 @@ def pretrain(
         if model_type == "dqn":
             network = FFXIVDQNAgent(
                 state_sizes=environment.state_sizes,
-                action_size=environment.action_size,
                 replay_period=10,
                 model_path=model_path
             ).duel_q_network
@@ -120,7 +119,7 @@ def pretrain(
                         consecutive_rests = 0
 
                         with tf.GradientTape() as tape:
-                            action_outputs_percentage, _ = network([state, tf.reshape(valid_actions, [1, -1])])
+                            action_outputs_percentage, _ = network(state)
 
                             answer = tf.reshape(tf.one_hot(rotations[rotation_cnt], action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
                             assert answer.shape == action_outputs_percentage.shape, f"answer.shape: {answer.shape} != action_outputs_percentage.shape: {action_outputs_percentage.shape}"
@@ -150,7 +149,7 @@ def pretrain(
                     else:
                         if sum(valid_actions) > 1:
                             with tf.GradientTape() as tape:
-                                action_outputs_percentage, _ = network([state, tf.reshape(valid_actions, [1, -1])])
+                                action_outputs_percentage, _ = network(state)
 
                                 answer = tf.reshape(tf.one_hot(0, action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
                                 loss = loss_function(answer, action_outputs_percentage) / 5 

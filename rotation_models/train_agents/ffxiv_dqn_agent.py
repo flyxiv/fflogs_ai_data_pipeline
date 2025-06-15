@@ -25,9 +25,8 @@ class FFXIVDQNAgent:
     Uses ranking based experience replay weight. 
     0 is the "do nothing" action
     """
-    def __init__(self, state_sizes, action_size, replay_period: int = 32, model_path=None):
+    def __init__(self, state_sizes, replay_period: int = 32, model_path=None):
         self.state_sizes = state_sizes
-        self.action_size = action_size
 
         # Replay buffer related
         self.memory = SumTree(capacity=1000)
@@ -77,7 +76,6 @@ class FFXIVDQNAgent:
         combo_states_input = keras.layers.Input(shape=(self.state_sizes['combo_states'],), name="combo_states")
         gcd_state_input = keras.layers.Input(shape=(self.state_sizes['gcd_state'],), name="gcd_state") # (None, 1) 또는 (None,) 형태의 int 또는 float
         time_state_input = keras.layers.Input(shape=(self.state_sizes['time_state'],), name="time_state")
-        valid_action_mask_inp = keras.Input(shape=(self.action_size,))
 
         dense_layers = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128])
         x = tf.concat([skill_states_input, status_states_input, resource_states_input, combo_states_input, gcd_state_input, time_state_input], axis=1)
@@ -100,9 +98,6 @@ class FFXIVDQNAgent:
         gcd_combo_adv = tf.concat([zeros, x2, zeros2], axis=1)
 
         adv = advantage_output_layer(x) + gcd_combo_adv
-
-        penalty_adder = (1.0 - valid_action_mask_inp) * IMPOSSIBLE_PENALTY
-        action_distribution_masked = keras.layers.Softmax()(adv + penalty_adder)
         val = state_output_layer(x)
 
         model_inputs = [
@@ -114,7 +109,7 @@ class FFXIVDQNAgent:
             time_state_input
         ]
 
-        model = keras.Model(inputs=[model_inputs, valid_action_mask_inp], outputs=[action_distribution_masked, val])
+        model = keras.Model(inputs=model_inputs, outputs=[adv, val])
         return model
 
     def get_action(self, state, valid_actions=None, debug=False):
@@ -131,7 +126,7 @@ class FFXIVDQNAgent:
         assert np.min(advantages) >= IMPOSSIBLE_PENALTY, f"Invalid action value: {np.min(advantages)}"
 
         if debug:
-            return np.argmax(advantages), advantages, state_output 
+            return np.argmax(advantages), state_output, state 
 
         return np.argmax(advantages)
 
@@ -157,7 +152,6 @@ class FFXIVDQNAgent:
         if memory_experience.done:
             return r_t - q_t_1_selected_action
 
-<<<<<<< HEAD
         q_target_t = self._calculate_q_value(memory_experience.next_state, is_target=True)
         q_target_max = tf.reduce_max(q_target_t)
 
@@ -165,10 +159,6 @@ class FFXIVDQNAgent:
 
     def _calculate_q_value(self, state, is_target=False):
         advantages, states_value = self.duel_q_network(state) if not is_target else self.target_duel_q_network(state)
-=======
-    def _calculate_q_value(self, state, valid_actions, is_target=False):
-        advantages, states_value = self.duel_q_network([state, valid_actions]) if not is_target else self.target_duel_q_network([state, valid_actions])
->>>>>>> 100c1acba0cfc127b9f8f6a20ff297f0c5c4eb59
 
         advantages = tf.squeeze(advantages, axis=0)
         states_value = tf.squeeze(states_value, axis=0)
@@ -230,9 +220,6 @@ class FFXIVDQNAgent:
         logging.info(f"loss: {loss}")
         grads = tape.gradient(loss, self.duel_q_network.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.duel_q_network.trainable_variables))
-
-        for idx, new_p in train_history:
-            self.memory.update(idx, new_p)
 
         self.steps += 1
 
