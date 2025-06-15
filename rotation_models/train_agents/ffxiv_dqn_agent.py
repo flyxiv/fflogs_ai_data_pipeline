@@ -25,9 +25,9 @@ class FFXIVDQNAgent:
     Uses ranking based experience replay weight. 
     0 is the "do nothing" action
     """
-    def __init__(self, state_sizes, action_sizes, replay_period: int = 32, model_path=None):
+    def __init__(self, state_sizes, action_size, replay_period: int = 32, model_path=None):
         self.state_sizes = state_sizes
-        self.action_sizes = action_sizes
+        self.action_size = action_size
 
         # Replay buffer related
         self.memory = SumTree(capacity=1000)

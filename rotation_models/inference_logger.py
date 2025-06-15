@@ -42,22 +42,36 @@ class InferenceLogger:
             "combat_time_millisecond": ninja_state.combat_time_millisecond,
             "target_time_millisecond": ninja_state.target_time_millisecond,
             "resources": self._to_readable_resources(ninja_state.resources),
-            "cooldowns": self._to_readable_cooldowns(ninja_state.cooldowns),
+            "cooldowns": self._to_readable_cooldowns(ninja_state.skills),
+            "buffs": self._to_readable_buffs(ninja_state.buffs),
+            "debuffs": self._to_readable_debuffs(ninja_state.debuffs)
         }
 
-    def _to_readable_resources(self, resources: List[int]):
-        return {
+    @staticmethod
+    def _to_readable_resources(resources: List[int]):
+        resources = {
             "ninki": resources[NinjaResources.NINKI.value],
             "shuriken": resources[NinjaResources.SHURIKEN.value],
-            "tcj_fuma": resources[NinjaResources.TCJ_FUMA.value],
-            "tcj_raiton": resources[NinjaResources.TCJ_RAITON.value],
-            "tcj_suiton": resources[NinjaResources.TCJ_SUITON.value],
         }
 
-    def _to_readable_cooldowns(self, cooldowns: List[int]):
+    @staticmethod
+    def _to_readable_cooldowns(skills: List[int]):
         return {
-            NinjaSkills(i).name: cooldowns[i] for i in range(len(NinjaSkills))
+            NinjaSkills(i + 1).name: skills[i].current_cooldown_millisecond for i in range(len(NinjaSkills))
         }
+
+    @staticmethod
+    def _to_readable_buffs(buffs):
+        return {
+            NinjaBuffs(i).name: [buffs[i].current_duration_millisecond, buffs[i].current_stacks] for i in range(len(NinjaBuffs)) if buffs[i]
+        }
+
+    @staticmethod
+    def _to_readable_debuffs(debuffs):
+        return {
+            NinjaDebuffs(i).name: debuffs[i] for i in range(len(NinjaDebuffs)) if debuffs[i]
+        }
+
 
     def save(self):
         with open(self.output_path, "w") as f:

@@ -75,7 +75,7 @@ def pretrain(
         if model_type == "dqn":
             network = FFXIVDQNAgent(
                 state_sizes=environment.state_sizes,
-                action_sizes=environment.action_sizes,
+                action_size=environment.action_size,
                 replay_period=10,
                 model_path=model_path
             ).duel_q_network
