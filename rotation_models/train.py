@@ -92,9 +92,6 @@ def train_dqn(
         model_path=pretrained_path
     )
 
-    agent.duel_q_network.load_weights(f'{pretrained_path}/dqn_model_pretrained.keras')
-    agent._update_target_network()
-
     num_actions = 0
     progression = {
         'episode': [],

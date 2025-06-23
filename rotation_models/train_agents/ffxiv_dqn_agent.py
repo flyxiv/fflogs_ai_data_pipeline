@@ -127,7 +127,7 @@ class FFXIVDQNAgent:
         advantages = tf.where(valid_actions == 1, advantages, IMPOSSIBLE_PENALTY)
 
         if debug:
-            return np.argmax(advantages), state_output, state 
+            return np.argmax(advantages), tf.nn.softmax(advantages), state_output 
 
         return np.argmax(advantages)
 

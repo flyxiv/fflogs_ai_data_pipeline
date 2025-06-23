@@ -69,7 +69,7 @@ class InferenceLogger:
     @staticmethod
     def _to_readable_debuffs(debuffs):
         return {
-            NinjaDebuffs(i).name: debuffs[i] for i in range(len(NinjaDebuffs)) if debuffs[i]
+            NinjaDebuffs(i).name: [debuffs[i].current_duration_millisecond, debuffs[i].current_stacks] for i in range(len(NinjaDebuffs)) if debuffs[i]
         }
 
 

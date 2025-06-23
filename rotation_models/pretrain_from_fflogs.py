@@ -101,7 +101,7 @@ def pretrain(
 
         for epoch in range(num_epochs):
 
-            for rotation_idx, (rotations, target_time_millisecond) in tqdm(enumerate(fflogs_rotation.ninja_dataset)):
+            for rotation_idx, (rotations, target_time_millisecond) in tqdm(enumerate(fflogs_rotation.ninja_dataset), total=len(fflogs_rotation.ninja_dataset)):
                 environment.reset()
                 environment.target_time_millisecond = target_time_millisecond
 
@@ -148,16 +148,13 @@ def pretrain(
                             logging.debug(f"NINKI: {environment.resources[NinjaResources.NINKI.value].current_stacks}")
                             logging.debug(NinjaSkills(rotations[rotation_cnt]).name)
                     else:
-                        if sum(valid_actions) > 1:
-                            with tf.GradientTape() as tape:
-                                action_outputs_percentage, _ = network(state)
+                        with tf.GradientTape() as tape:
+                            action_outputs_percentage, _ = network(state)
 
-                                answer = tf.reshape(tf.one_hot(0, action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
-                                loss = loss_function(answer, action_outputs_percentage) / 5 
-                                gradients = tape.gradient(loss, network.trainable_variables)
-
-                                if consecutive_rests < 15:
-                                    optimizer.apply_gradients(zip(gradients, network.trainable_variables))
+                            answer = tf.reshape(tf.one_hot(0, action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
+                            loss = loss_function(answer, action_outputs_percentage) 
+                            gradients = tape.gradient(loss, network.trainable_variables)
+                            optimizer.apply_gradients(zip(gradients, network.trainable_variables))
 
                         next_state, next_valid_actions, current_time_millisecond, _, _ = environment.use_skill(0)
                         valid_actions = next_valid_actions
@@ -165,7 +162,7 @@ def pretrain(
 
                         consecutive_rests += 1
 
-                        if consecutive_rests > 500:
+                        if consecutive_rests > 50:
                             break
             
                 if rotation_cnt > 0:

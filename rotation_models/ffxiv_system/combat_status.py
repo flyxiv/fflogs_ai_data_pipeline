@@ -8,6 +8,7 @@ from rotation_models.const import (
 from .job_database import JobDatabase
 from typing import List
 import tensorflow as tf
+import logging
 from copy import deepcopy
 
 
@@ -111,6 +112,7 @@ class CombatStatus:
             0, self.gcd_cooldown_millisecond - delta_time_millisecond
         )
 
+
     def use_skill(self, skill_id: int):
         if skill_id == 0:
             self.advance_time(UNIT_TIME_PER_ACTION_MILLISECOND)
@@ -137,6 +139,12 @@ class CombatStatus:
 
         self.advance_time(delay_data.delay_millisecond)
 
+        valid_actions = self.get_valid_skills()
+        while self.is_not_selectable_state(valid_actions):
+            logging.debug('waiting because there is no usable skill')
+            self.advance_time(UNIT_TIME_PER_ACTION_MILLISECOND)
+            valid_actions = self.get_valid_skills()
+
         return (
             self.get_state(),
             self.get_valid_skills(),
@@ -144,6 +152,11 @@ class CombatStatus:
             potency / MAX_POTENCY,
             self.combat_time_millisecond >= self.target_time_millisecond,
         )
+
+    @staticmethod
+    def is_not_selectable_state(valid_actions):
+        # if the only valid action is to hold, there is no choice we can make thus not a valid state
+        return sum(valid_actions) == 1.0 and valid_actions[0] == 1.0
 
     def get_state(self):
         skill_states = []
