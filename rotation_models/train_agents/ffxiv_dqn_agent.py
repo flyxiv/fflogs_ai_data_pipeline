@@ -63,7 +63,7 @@ class FFXIVDQNAgent:
             self.target_duel_q_network = self._build_network()
 
         self._update_target_network()
-
+        tf.keras.utils.plot_model(self.duel_q_network, show_shapes=True, show_layer_names=True)
 
     def _update_target_network(self):
         self.target_duel_q_network.set_weights(self.duel_q_network.get_weights())
@@ -75,7 +75,7 @@ class FFXIVDQNAgent:
         status_states_input = keras.layers.Input(shape=(self.state_sizes['status_states'],), name="status_states")
         resource_states_input = keras.layers.Input(shape=(self.state_sizes['resource_states'],), name="resource_states")
         combo_states_input = keras.layers.Input(shape=(self.state_sizes['combo_states'],), name="combo_states")
-        gcd_state_input = keras.layers.Input(shape=(self.state_sizes['gcd_state'],), name="gcd_state") # (None, 1) 또는 (None,) 형태의 int 또는 float
+        gcd_state_input = keras.layers.Input(shape=(self.state_sizes['gcd_state'],), name="gcd_state")
         time_state_input = keras.layers.Input(shape=(self.state_sizes['time_state'],), name="time_state")
 
         dense_layers = build_dense_network([128, 256, 512, 1024, 512, 512, 256, 128])
@@ -122,7 +122,7 @@ class FFXIVDQNAgent:
         """
         if np.random.rand() <= self.epsilon:
             return self._randomly_select_actions(valid_actions)
-        
+
         advantages, state_output = self.duel_q_network(state)
         advantages = tf.where(valid_actions == 1, advantages, IMPOSSIBLE_PENALTY)
 

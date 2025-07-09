@@ -125,6 +125,8 @@ def train_dqn(
 
 
         while not done:
+            print(state)
+            print(valid_actions)
             action_id = agent.get_action(state, valid_actions)
 
             if action_id > 0:

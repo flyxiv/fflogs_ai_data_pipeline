@@ -151,8 +151,11 @@ def pretrain(
                         with tf.GradientTape() as tape:
                             action_outputs_percentage, _ = network(state)
 
+
                             answer = tf.reshape(tf.one_hot(0, action_outputs_percentage.shape[1]), action_outputs_percentage.shape)
-                            loss = loss_function(answer, action_outputs_percentage) 
+                            loss = loss_function(answer, action_outputs_percentage) / 5
+
+                        if sum(valid_actions) > 1:
                             gradients = tape.gradient(loss, network.trainable_variables)
                             optimizer.apply_gradients(zip(gradients, network.trainable_variables))
 
